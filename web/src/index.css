@@ -293,11 +293,24 @@ textarea {
 
 /* Home */
 .hero {
-  padding: 96px 0 72px;
+  padding: 120px 0 96px;
   background:
+    linear-gradient(90deg, var(--bg) 25%, color-mix(in srgb, var(--bg) 55%, transparent) 65%, color-mix(in srgb, var(--bg) 30%, transparent)),
+    linear-gradient(0deg, var(--bg), transparent 40%),
+    var(--cover, none) center 35% / cover no-repeat,
     radial-gradient(ellipse at 80% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
     var(--bg);
   border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 72px 0 56px;
+    background:
+      linear-gradient(0deg, var(--bg) 10%, color-mix(in srgb, var(--bg) 70%, transparent)),
+      var(--cover, none) center / cover no-repeat,
+      var(--bg);
+  }
 }
 
 .hero h1 {
@@ -421,11 +434,197 @@ textarea {
   margin-bottom: 12px;
 }
 
+.portfolio button {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .portfolio img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.portfolio button:hover img {
+  transform: scale(1.06);
+}
+
+.portfolio .more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.55);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Carousel */
+.carousel {
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-item {
+  flex: 0 0 min(300px, 78vw);
+  margin: 0;
+  scroll-snap-align: start;
+}
+
+.carousel-item button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: var(--bg-raised);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.carousel-item img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s;
+}
+
+.carousel-item button:hover img {
+  transform: scale(1.04);
+}
+
+.carousel-item figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 2px 0;
+  font-size: 0.875rem;
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: calc(50% - 36px);
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(6px);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel-arrow:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.carousel-arrow.prev {
+  left: -14px;
+}
+
+.carousel-arrow.next {
+  right: -14px;
+}
+
+@media (hover: none) {
+  .carousel-arrow {
+    display: none;
+  }
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(0 0 0 / 0.92);
+  display: grid;
+  place-items: center;
+  padding: 56px 16px 24px;
+  cursor: zoom-out;
+}
+
+.lightbox figure {
+  margin: 0;
+  max-width: min(1100px, 100%);
+  cursor: default;
+}
+
+.lightbox img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  margin: 0 auto;
   border-radius: 8px;
+}
+
+.lightbox figcaption {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.lightbox-count {
+  margin-left: 12px;
+  font-size: 0.85rem;
+}
+
+.lightbox-arrow,
+.lightbox-close {
+  position: absolute;
+  background: none;
+  border: none;
+  font-size: 2.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text);
+  padding: 12px;
+  opacity: 0.8;
+}
+
+.lightbox-arrow:hover,
+.lightbox-close:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.lightbox-arrow.prev {
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-arrow.next {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-close {
+  top: 4px;
+  right: 8px;
 }
 
 /* Services */
@@ -669,6 +868,15 @@ textarea {
 .form textarea:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.form input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.85rem;
 }
 
 .form fieldset {

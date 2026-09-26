@@ -50,6 +50,11 @@ export function formatDateTime(instant: string, timeZone: string, locale: string
   })
 }
 
+/** Smaller variant of an image URL where the host supports it (Unsplash placeholders). */
+export function sized(url: string, width: number): string {
+  return url.includes('images.unsplash.com') ? url.replace(/([?&])w=\d+/, `$1w=${width}`) : url
+}
+
 export const isTattoo = (s: Pick<Service, 'kind'>) => s.kind.startsWith('Tattoo')
 
 /** "11:00:00" -> "11:00" */

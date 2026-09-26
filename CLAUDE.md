@@ -57,7 +57,7 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 
 1. Skeleton: solution, EF model, seed, logging, Docker <- DONE
 2. Availability + booking API + tests <- DONE (approve/decline/cancel in BookingService; no endpoints yet)
-3. Public site (EN/RU): services, artists/portfolio, booking form <- DONE (no real photos/portfolio yet; reference images for tattoos not uploadable yet)
+3. Public site (EN/RU): services, artists/portfolio, booking form <- DONE (photos are Unsplash placeholders hotlinked from SeedData until the salon sends real work; reference images for tattoos not uploadable yet). Phones validated with libphonenumber on both sides (default region = `Salon.Country`), stored as E.164.
 4. AI receptionist + web chat widget <- NEXT
 5. Telegram: client bot, staff group (new booking -> approve/decline buttons, handoffs), 24h/2h reminders
 6. Admin panel: calendar, manage artists/services/hours, transcripts, staff login

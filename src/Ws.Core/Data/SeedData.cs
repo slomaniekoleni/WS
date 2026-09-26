@@ -11,8 +11,88 @@ public static class SeedData
 {
     public static async Task EnsureSeededAsync(WsDbContext db, CancellationToken ct = default)
     {
-        if (await db.Salons.AnyAsync(ct)) return;
+        if (!await db.Salons.AnyAsync(ct)) await SeedSalonAsync(db, ct);
+        await BackfillPhotosAsync(db, ct);
+    }
 
+    // Placeholder photos from Unsplash (free license), hotlinked until the salon sends its own work.
+    private static string Unsplash(string id) => $"https://images.unsplash.com/photo-{id}?w=900&q=80&auto=format&fit=crop";
+
+    private const string CoverImage = "1565058379802-bbe93b2f703a";
+
+    private static readonly Dictionary<string, (string Id, string Style, string En, string Ru)[]> Portfolio = new()
+    {
+        ["Alex"] =
+        [
+            ("1547754145-ef9ff306e3f3", "fine-line", "Fine-line script", "Надпись тонкими линиями"),
+            ("1570168983832-8989dae1522e", "lettering", "Script lettering", "Надпись"),
+            ("1651692883249-ed36b3523419", "botanical", "Botanical forearm piece", "Ботаника на предплечье"),
+            ("1709094269206-cc77802ab4e0", "fine-line", "Fine-line animal", "Животное тонкими линиями"),
+        ],
+        ["Mira"] =
+        [
+            ("1568515045052-f9a854d70bfd", "black-and-grey", "Black & grey sleeve in progress", "Чёрно-серый рукав в процессе"),
+            ("1597852075234-fd721ac361d3", "realism", "Realism sleeve", "Реалистичный рукав"),
+            ("1564426622559-5af68da63b96", "black-and-grey", "Shading session", "Сеанс растушёвки"),
+            ("1567071208639-716c1009517d", "realism", "Black & grey detail", "Чёрно-серая детализация"),
+        ],
+        ["Dan"] =
+        [
+            ("1601848714157-d845bb5c11ff", "traditional", "Traditional leg piece", "Олдскул на ноге"),
+            ("1479767574301-a01c78234a0c", "color", "Color work", "Цветная работа"),
+            ("1543244128-30d70d41e2a9", "traditional", "Traditional sleeve", "Олдскул рукав"),
+            ("1585303390830-874c989ce8f1", "neo-traditional", "Neo-traditional rose", "Нео-традишнл роза"),
+            ("1561377455-190afb395ed7", "blackwork", "Blackwork back piece", "Блэкворк на спине"),
+        ],
+        ["Kate"] =
+        [
+            ("1671644730555-916aa8d8157f", "piercing", "Earlobe with hoop", "Мочка с кольцом"),
+            ("1573717008136-5a9f0820e8bf", "piercing", "Lobe piercing", "Прокол мочки"),
+        ],
+        ["Leo"] =
+        [
+            ("1632568851266-b8e23c1738f5", "piercing", "Ear project", "Композиция на ухе"),
+            ("1650056201297-4a6d7ec6ca6c", "piercing", "Healed ear piercings", "Зажившие проколы"),
+        ],
+    };
+
+    /// <summary>Adds placeholder photos to databases created before photos existed. Never touches real ones.</summary>
+    private static async Task BackfillPhotosAsync(WsDbContext db, CancellationToken ct)
+    {
+        // Placeholder covers (Unsplash) follow the current pick; a real uploaded cover is left alone.
+        var cover = Unsplash(CoverImage);
+        foreach (var salon in await db.Salons.ToListAsync(ct))
+        {
+            if (salon.CoverImageUrl == null || salon.CoverImageUrl.StartsWith("https://images.unsplash.com/"))
+                salon.CoverImageUrl = cover;
+        }
+
+        if (!await db.PortfolioImages.AnyAsync(ct))
+        {
+            var artists = await db.Artists.ToListAsync(ct);
+            foreach (var artist in artists)
+            {
+                if (!Portfolio.TryGetValue(artist.Name, out var photos)) continue;
+                var order = 0;
+                foreach (var p in photos)
+                {
+                    db.PortfolioImages.Add(new PortfolioImage
+                    {
+                        ArtistId = artist.Id,
+                        Url = Unsplash(p.Id),
+                        Style = p.Style,
+                        Caption = new(p.En, p.Ru),
+                        SortOrder = order++,
+                    });
+                }
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedSalonAsync(WsDbContext db, CancellationToken ct)
+    {
         var salon = new Salon
         {
             Name = "Wise City",

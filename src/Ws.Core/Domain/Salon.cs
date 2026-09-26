@@ -11,9 +11,13 @@ public sealed class Salon
     /// <summary>IANA time zone id, e.g. "Europe/Warsaw". Working hours are local to it.</summary>
     public string TimeZoneId { get; set; } = "UTC";
     public string Currency { get; set; } = "EUR";
+    /// <summary>ISO 3166 country code; phone numbers without a country code are read as local to it.</summary>
+    public string Country { get; set; } = "BY";
     public LocalizedText Address { get; set; } = new();
     public string Phone { get; set; } = "";
     public string? Instagram { get; set; }
+    /// <summary>Big photo on the home page.</summary>
+    public string? CoverImageUrl { get; set; }
     public LocalizedText About { get; set; } = new();
     /// <summary>Policies and FAQ (markdown): deposits, cancellation, aftercare, pain, healing... Fed to the AI receptionist.</summary>
     public LocalizedText Policies { get; set; } = new();

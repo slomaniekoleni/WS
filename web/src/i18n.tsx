@@ -19,6 +19,7 @@ const en = {
   'home.age.title': '16+',
   'home.age.text': '16–17 with a parent or guardian, 18+ on your own. Bring your ID.',
   'home.artists': 'Our artists',
+  'home.works': 'Our work',
   'home.visit': 'Visit us',
 
   'services.title': 'Services and prices',
@@ -53,6 +54,7 @@ const en = {
   'book.loading': 'Loading…',
   'book.name': 'Name',
   'book.phone': 'Phone',
+  'book.phone.invalid': 'Please enter a valid phone number, e.g. +375 29 123-45-67.',
   'book.email': 'Email (optional)',
   'book.age': 'Age',
   'book.age.adult': "I'm 18 or older",
@@ -99,6 +101,7 @@ const ru: Record<Key, string> = {
   'home.age.title': '16+',
   'home.age.text': '16–17 лет с родителем или законным представителем, с 18 самостоятельно. Возьмите документ.',
   'home.artists': 'Наши мастера',
+  'home.works': 'Наши работы',
   'home.visit': 'Как нас найти',
 
   'services.title': 'Услуги и цены',
@@ -133,6 +136,7 @@ const ru: Record<Key, string> = {
   'book.loading': 'Загрузка…',
   'book.name': 'Имя',
   'book.phone': 'Телефон',
+  'book.phone.invalid': 'Введите корректный номер, например +375 29 123-45-67.',
   'book.email': 'Email (необязательно)',
   'book.age': 'Возраст',
   'book.age.adult': 'Мне есть 18',

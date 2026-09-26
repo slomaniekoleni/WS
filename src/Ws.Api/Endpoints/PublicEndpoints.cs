@@ -21,7 +21,7 @@ public static class PublicEndpoints
 
     public sealed record SalonDto(
         string Name, string Address, string Phone, string? Instagram, string About, string Policies, string Currency,
-        string TimeZone, int MinAgeWithGuardian, int MinAgeSolo, IReadOnlyList<HoursDto> OpeningHours);
+        string TimeZone, string Country, string? CoverImageUrl, int MinAgeWithGuardian, int MinAgeSolo, IReadOnlyList<HoursDto> OpeningHours);
 
     public sealed record HoursDto(DayOfWeek Day, TimeOnly Open, TimeOnly Close);
 
@@ -49,7 +49,7 @@ public static class PublicEndpoints
         if (s == null) return Results.NotFound();
         return Results.Ok(new SalonDto(
             s.Name, s.Address.Get(lang), s.Phone, s.Instagram, s.About.Get(lang), s.Policies.Get(lang), s.Currency,
-            s.TimeZoneId, s.MinAgeWithGuardian, s.MinAgeSolo,
+            s.TimeZoneId, s.Country, s.CoverImageUrl, s.MinAgeWithGuardian, s.MinAgeSolo,
             s.OpeningHours.OrderBy(h => ((int)h.Day + 6) % 7).Select(h => new HoursDto(h.Day, h.Open, h.Close)).ToList()));
     }
 

@@ -36,6 +36,7 @@ public enum BookingError
     ArtistDoesNotDoService,
     AdultsOnly,
     MissingContact,
+    InvalidPhone,
     SlotTaken,
     InvalidState,
 }
@@ -98,6 +99,15 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock)
         var salon = await db.Salons.Include(s => s.Rooms).FirstOrDefaultAsync(s => s.Id == req.SalonId, ct);
         var service = await db.Services.FirstOrDefaultAsync(s => s.Id == req.ServiceId && s.SalonId == req.SalonId && s.IsActive, ct);
         if (salon == null || service == null) return BookingResult.Fail(BookingError.NotFound);
+
+        // Store phones in one format (E.164) so the same client is recognized however they typed it.
+        string? phone = null;
+        if (!string.IsNullOrWhiteSpace(req.Phone))
+        {
+            phone = PhoneFormat.Normalize(req.Phone, salon.Country);
+            if (phone == null) return BookingResult.Fail(BookingError.InvalidPhone);
+        }
+
         if (!service.BookableOnline && !staff) return BookingResult.Fail(BookingError.ServiceNotBookableOnline);
         if (service.AdultsOnly && req.AgeGroup != AgeGroup.Adult) return BookingResult.Fail(BookingError.AdultsOnly);
 
@@ -120,7 +130,7 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock)
             var roomId = SlotFinder.FindRoom(query, startUtc);
             if (roomId == null) return BookingResult.Fail(BookingError.SlotTaken);
 
-            var client = await FindOrCreateClientAsync(req, ct);
+            var client = await FindOrCreateClientAsync(req with { Phone = phone }, ct);
             var booking = new Booking
             {
                 SalonId = salon.Id,

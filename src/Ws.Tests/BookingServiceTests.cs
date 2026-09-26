@@ -39,7 +39,7 @@ public sealed class BookingServiceTests : IAsyncLifetime
     private async Task<int> ArtistId(string name) => (await _db.Artists.SingleAsync(a => a.Name == name)).Id;
 
     private async Task<BookingResult> Book(string service, string artist, DateTime startUtc,
-        AgeGroup age = AgeGroup.Adult, Channel source = Channel.Website, string phone = "+1000") =>
+        AgeGroup age = AgeGroup.Adult, Channel source = Channel.Website, string phone = "+375291111111") =>
         await _svc.CreateAsync(new NewBooking
         {
             SalonId = 1,
@@ -60,7 +60,7 @@ public sealed class BookingServiceTests : IAsyncLifetime
         Assert.Equal(BookingStatus.Pending, first.Booking!.Status);
         Assert.Equal(MondayNoonUtc.AddMinutes(45), first.Booking.BlockedUntilUtc); // 30 min + 15 buffer
 
-        var second = await Book("Earlobe piercing", "Leo", MondayNoonUtc.AddMinutes(30), phone: "+2000");
+        var second = await Book("Earlobe piercing", "Leo", MondayNoonUtc.AddMinutes(30), phone: "+375292222222");
         Assert.Equal(BookingError.SlotTaken, second.Error);
     }
 
@@ -70,7 +70,7 @@ public sealed class BookingServiceTests : IAsyncLifetime
         var first = await Book("Earlobe piercing", "Leo", MondayNoonUtc);
         await _svc.DeclineAsync(first.Booking!.Id, "sick");
 
-        Assert.True((await Book("Earlobe piercing", "Leo", MondayNoonUtc, phone: "+2000")).Ok);
+        Assert.True((await Book("Earlobe piercing", "Leo", MondayNoonUtc, phone: "+375292222222")).Ok);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class BookingServiceTests : IAsyncLifetime
     {
         Assert.True((await Book("Nipple piercing", "Leo", MondayNoonUtc)).Ok);
 
-        var kate = await Book("Earlobe piercing", "Kate", MondayNoonUtc, phone: "+2000");
+        var kate = await Book("Earlobe piercing", "Kate", MondayNoonUtc, phone: "+375292222222");
         Assert.Equal(BookingError.SlotTaken, kate.Error);
 
         var slots = await _svc.GetAvailabilityAsync(1, await ServiceId("Earlobe piercing"), await ArtistId("Kate"),
@@ -117,6 +117,20 @@ public sealed class BookingServiceTests : IAsyncLifetime
         await Book("Earlobe piercing", "Leo", MondayNoonUtc);
         await Book("Earlobe piercing", "Kate", MondayNoonUtc.AddHours(2));
 
+        Assert.Equal(1, await _db.Clients.CountAsync());
+    }
+
+    [Fact]
+    public async Task Phone_is_validated_and_stored_normalized()
+    {
+        Assert.Equal(BookingError.InvalidPhone, (await Book("Earlobe piercing", "Leo", MondayNoonUtc, phone: "12345")).Error);
+
+        var ok = await Book("Earlobe piercing", "Leo", MondayNoonUtc, phone: "8 029 111-11-11");
+        Assert.True(ok.Ok);
+        Assert.Equal("+375291111111", ok.Booking!.Client.Phone);
+
+        // Same person typing the number differently is the same client.
+        await Book("Earlobe piercing", "Kate", MondayNoonUtc.AddHours(2), phone: "+375 (29) 111 11 11");
         Assert.Equal(1, await _db.Clients.CountAsync());
     }
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min'
 import { Link, useSearchParams } from 'react-router'
 import { api, ApiError, type AgeGroup, type ArtistSlots, type BookingCreated, type Service } from '../api'
 import { useData } from '../data'
@@ -132,6 +133,7 @@ export default function Book() {
             service={service}
             slot={slot}
             lang={lang}
+            country={salon.country as CountryCode}
             onBooked={setDone}
             onSlotTaken={() => {
               setSlot(null)
@@ -244,6 +246,7 @@ function DetailsForm(props: {
   service: Service
   slot: Slot
   lang: 'en' | 'ru'
+  country: CountryCode
   onBooked: (b: BookingCreated) => void
   onSlotTaken: () => void
 }) {
@@ -252,6 +255,7 @@ function DetailsForm(props: {
   const consultation = service.kind === 'TattooConsultation'
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState(false)
   const [email, setEmail] = useState('')
   const [age, setAge] = useState<AgeGroup>('Adult')
   const [notes, setNotes] = useState('')
@@ -260,8 +264,27 @@ function DetailsForm(props: {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Numbers without a country code are read as local to the salon ("29 123 45 67", "80291234567").
+  const parsePhone = (value: string) => {
+    const parsed = parsePhoneNumberFromString(value, props.country)
+    return parsed?.isValid() ? parsed : null
+  }
+
+  const checkPhone = () => {
+    if (!phone.trim()) return
+    const parsed = parsePhone(phone)
+    setPhoneError(!parsed)
+    if (parsed) setPhone(parsed.formatInternational())
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
+    const parsed = parsePhone(phone)
+    if (!parsed) {
+      setPhoneError(true)
+      document.getElementById('phone')?.focus()
+      return
+    }
     setSending(true)
     setError(null)
     try {
@@ -270,7 +293,7 @@ function DetailsForm(props: {
         artistId: slot.artistId,
         startUtc: slot.startUtc,
         clientName: name.trim(),
-        phone: phone.trim(),
+        phone: parsed.number,
         email: email.trim() || undefined,
         ageGroup: service.adultsOnly ? 'Adult' : age,
         language: lang,
@@ -279,7 +302,9 @@ function DetailsForm(props: {
       })
       props.onBooked(booked)
     } catch (err) {
-      if (err instanceof ApiError && err.code === 'SlotTaken') {
+      if (err instanceof ApiError && err.code === 'InvalidPhone') {
+        setPhoneError(true)
+      } else if (err instanceof ApiError && err.code === 'SlotTaken') {
         props.onSlotTaken()
       } else {
         setError(t('book.error.generic'))
@@ -305,14 +330,26 @@ function DetailsForm(props: {
       <label>
         {t('book.phone')}
         <input
+          id="phone"
           required
           type="tel"
+          inputMode="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setPhone(e.target.value)
+            if (phoneError && parsePhone(e.target.value)) setPhoneError(false)
+          }}
+          onBlur={checkPhone}
           placeholder="+375 29 123-45-67"
           autoComplete="tel"
-          pattern="[+\d\s()\-]{7,20}"
+          aria-invalid={phoneError}
+          aria-describedby={phoneError ? 'phone-error' : undefined}
         />
+        {phoneError && (
+          <span id="phone-error" className="field-error">
+            {t('book.phone.invalid')}
+          </span>
+        )}
       </label>
       <label>
         {t('book.email')}

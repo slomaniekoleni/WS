@@ -11,6 +11,8 @@ export interface Salon {
   policies: string
   currency: string
   timeZone: string
+  country: string
+  coverImageUrl: string | null
   minAgeWithGuardian: number
   minAgeSolo: number
   openingHours: { day: DayOfWeek; open: string; close: string }[]

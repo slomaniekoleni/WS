@@ -1,6 +1,8 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { ArtistCard, OpeningHours } from '../components'
 import { useData } from '../data'
+import { Carousel } from '../gallery'
 import { useI18n } from '../i18n'
 
 export default function Home() {
@@ -8,10 +10,15 @@ export default function Home() {
   const data = useData()
   if (data.status !== 'ready') return null
   const { salon, artists } = data
+  // Interleave artists so the carousel doesn't show one artist's work in a row.
+  const works = interleave(artists.map((a) => a.portfolio.map((p) => ({ url: p.url, caption: p.caption, credit: a.name }))))
 
   return (
     <>
-      <section className="hero">
+      <section
+        className="hero"
+        style={salon.coverImageUrl ? { '--cover': `url("${salon.coverImageUrl}")` } as CSSProperties : undefined}
+      >
         <div className="container">
           <p className="eyebrow">{t('home.tagline')}</p>
           <h1>{salon.name}</h1>
@@ -43,6 +50,11 @@ export default function Home() {
       </section>
 
       <section className="container section">
+        <h2>{t('home.works')}</h2>
+        <Carousel photos={works} />
+      </section>
+
+      <section className="container section">
         <h2>{t('home.artists')}</h2>
         <div className="grid">
           {artists.map((a) => (
@@ -66,4 +78,10 @@ export default function Home() {
       </section>
     </>
   )
+}
+
+function interleave<T>(lists: T[][]): T[] {
+  const out: T[] = []
+  for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i])
+  return out
 }

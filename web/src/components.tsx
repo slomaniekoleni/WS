@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import type { Artist, DayOfWeek, Salon } from './api'
-import { shortTime } from './format'
+import { shortTime, sized } from './format'
+import { Lightbox } from './gallery'
 import { useI18n } from './i18n'
 
 const dayIndex: Record<DayOfWeek, number> = {
@@ -39,6 +41,8 @@ export function OpeningHours({ salon }: { salon: Salon }) {
 
 export function ArtistCard({ artist }: { artist: Artist }) {
   const { t, styleName } = useI18n()
+  const [open, setOpen] = useState<number | null>(null)
+  const photos = artist.portfolio.map((p) => ({ url: p.url, caption: p.caption, credit: artist.name }))
   return (
     <article className="card artist">
       <div className="avatar" aria-hidden>
@@ -57,11 +61,15 @@ export function ArtistCard({ artist }: { artist: Artist }) {
         )}
         {artist.portfolio.length > 0 && (
           <div className="portfolio">
-            {artist.portfolio.slice(0, 6).map((p) => (
-              <img key={p.url} src={p.url} alt={p.caption} loading="lazy" />
+            {artist.portfolio.slice(0, 3).map((p, i) => (
+              <button key={p.url} onClick={() => setOpen(i)} aria-label={p.caption}>
+                <img src={sized(p.url, 300)} alt={p.caption} loading="lazy" />
+                {i === 2 && artist.portfolio.length > 3 && <span className="more">+{artist.portfolio.length - 3}</span>}
+              </button>
             ))}
           </div>
         )}
+        {open != null && <Lightbox photos={photos} start={open} onClose={() => setOpen(null)} />}
         <Link to={`/book?artist=${artist.id}`} className="link-arrow">
           {t('artists.book', { name: artist.name })} →
         </Link>
