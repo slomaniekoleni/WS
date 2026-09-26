@@ -5,6 +5,9 @@ import App from './App'
 import { DataProvider } from './data'
 import { I18nProvider } from './i18n'
 import './index.css'
+import { applyTheme } from './theme'
+
+applyTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

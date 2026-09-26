@@ -1,8 +1,36 @@
 /*
- * "Moss forest": deep moss green base, oxblood red for actions, tatami and fog-paper tones for text.
- * Colours come from the salon's Japanese references (moss, cedar, oxblood, tatami).
+ * Themes built from the salon's Japanese colour references. Picked with ?theme=shoji|moss (see theme.ts).
+ *
+ * "Shoji house" (default): shoji-white paper, tatami beige, cedar brown, moss green; red only as hanko stamps.
  */
 :root {
+  --bg: #f4f0e8;
+  --bg-deep: #e5d9c5;
+  --bg-raised: #fbf9f4;
+  --bg-hover: #ece4d6;
+  --border: #ddd1bd;
+  --text: #2c2b29;
+  --muted: #75665a;
+  /* --accent: text links/highlights; --accent-fill: solid buttons with --accent-ink text. */
+  --accent: #8b5e3c;
+  --accent-fill: #2c2b29;
+  --accent-fill-hover: #4a3326;
+  --accent-ink: #f4f0e8;
+  --tatami: #6b7753;
+  --tatami-panel: #e5d9c5;
+  --tatami-line: #c9b48f;
+  --stamp: #a3201c;
+  --paper: #f4f0e8;
+  --ink: #2c2b29;
+  --danger: #a3201c;
+  --radius: 10px;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* "Moss forest": deep moss green base, oxblood red for actions, tatami and fog-paper tones for text. */
+:root[data-theme='moss'] {
   --bg: #2f3a2c;
   --bg-deep: #252e23;
   --bg-raised: #36432f;
@@ -10,19 +38,17 @@
   --border: #4d5a45;
   --text: #ece4d4;
   --muted: #bdb39d;
-  /* --accent: readable warm red for text/links on green; --accent-fill: oxblood behind cream text. */
   --accent: #e3867a;
   --accent-fill: #8e1b24;
   --accent-fill-hover: #a3232c;
   --accent-ink: #f3ede3;
   --tatami: #c9b98f;
-  --moss: #716729;
+  --stamp: #8e1b24;
   --paper: #ece4d4;
   --ink: #211a17;
   --danger: #f09a8c;
   --radius: 14px;
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Manrope', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -182,7 +208,7 @@ textarea {
 
 .brush {
   display: block;
-  color: var(--accent-fill);
+  color: var(--stamp);
   margin: -4px 0 18px;
 }
 
@@ -337,8 +363,19 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
-/* Flowing water lines on the right, drawn in fog-paper colour. */
+/* Shoji: a tatami panel on the right with a shoji screen grid. */
 .hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 58%;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(33.333% - 2px), var(--tatami-line) calc(33.333% - 2px) 33.333%),
+    repeating-linear-gradient(180deg, transparent 0 calc(33.333% - 2px), var(--tatami-line) calc(33.333% - 2px) 33.333%),
+    var(--tatami-panel);
+}
+
+/* Moss: flowing water lines on the right, drawn in fog-paper colour. */
+[data-theme='moss'] .hero::before {
   content: '';
   position: absolute;
   inset: 0 0 0 52%;
@@ -346,8 +383,8 @@ textarea {
   opacity: 0.13;
 }
 
-/* Seigaiha (ocean wave) pattern in faint moss-gold, fading in from the right. */
-.hero::after {
+/* Moss: seigaiha (ocean wave) pattern in faint moss-gold, fading in from the right. */
+[data-theme='moss'] .hero::after {
   content: '';
   position: absolute;
   inset: 0 0 0 45%;
@@ -371,7 +408,7 @@ textarea {
   gap: 18px;
 }
 
-.hero-seal .seal {
+[data-theme='moss'] .hero-seal .seal {
   box-shadow: 0 0 0 10px color-mix(in srgb, var(--paper) 8%, transparent), 0 24px 60px rgb(0 0 0 / 0.5);
 }
 
@@ -382,6 +419,22 @@ textarea {
   font-size: 2rem;
   letter-spacing: 0.3em;
   color: var(--accent);
+}
+
+/* Cormorant has a small x-height: give its headings a bit more size. */
+:root:not([data-theme='moss']) h3 {
+  font-size: 1.35rem;
+}
+
+/* Shoji: the kanji become a red hanko stamp. */
+:root:not([data-theme='moss']) .kanji-vertical {
+  align-self: flex-end;
+  padding: 10px 6px;
+  border-radius: 4px;
+  background: var(--stamp);
+  color: var(--paper);
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
 }
 
 @media (max-width: 860px) {
@@ -402,6 +455,10 @@ textarea {
   .kanji-vertical {
     font-size: 1.3rem;
   }
+  :root:not([data-theme='moss']) .hero::before {
+    inset: 0 0 auto 0;
+    height: 205px;
+  }
   .hero::after {
     inset: 0;
     mask-image: linear-gradient(180deg, #000, transparent 55%);
@@ -421,7 +478,7 @@ textarea {
   height: 0.55em;
   margin-right: 0.5em;
   border-radius: 2px;
-  background: var(--accent-fill);
+  background: var(--stamp);
   vertical-align: 0.12em;
   transform: rotate(4deg);
 }
@@ -571,6 +628,7 @@ textarea {
   display: grid;
   place-items: center;
   background: rgb(0 0 0 / 0.55);
+  color: #fff;
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -670,6 +728,7 @@ textarea {
   inset: 0;
   z-index: 100;
   background: rgb(0 0 0 / 0.92);
+  color: #f4f0e8;
   display: grid;
   place-items: center;
   padding: 56px 16px 24px;
