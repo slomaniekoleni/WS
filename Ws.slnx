@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ws.Api/Ws.Api.csproj" />
+    <Project Path="src/Ws.Core/Ws.Core.csproj" />
+    <Project Path="src/Ws.Tests/Ws.Tests.csproj" />
+  </Folder>
+</Solution>

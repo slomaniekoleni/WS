@@ -1,0 +1,15 @@
+# Secrets (Claude API key, Telegram token) go in .env next to this file (gitignored), see .env.example.
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ws-data:/data
+
+volumes:
+  ws-data:
