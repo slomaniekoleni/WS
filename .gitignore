@@ -1,4 +1,4 @@
-bin/
+﻿bin/
 obj/
 .vs/
 .idea/
@@ -7,7 +7,7 @@ node_modules/
 dist/
 
 # local data and secrets
-data/
+/src/Ws.Api/data/
 *.db
 *.db-shm
 *.db-wal
