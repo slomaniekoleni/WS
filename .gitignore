@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+node_modules/
+dist/
+
+# local data and secrets
+data/
+*.db
+*.db-shm
+*.db-wal
+.env
+appsettings.*.local.json
