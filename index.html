@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wise City · Moss Playground</title>
+<meta name="description" content="Try layouts and green transparency/matte settings for the Wise City site.">
+<link rel="icon" type="image/png" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Manrope:wght@400;600&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{--bg:#f6f2ea;--panel:#fffdf8;--text:#211a17;--muted:#6b5c52;--border:#ddd2c0;--strong:#b9a98f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1714;--panel:#221e1a;--text:#ece4d4;--muted:#b5aa98;--border:#3a332c;--strong:#5b5044;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 Manrope,system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 16px 48px}
+h1{font:700 26px 'Playfair Display',serif;margin:0 0 4px}
+.intro{color:var(--muted);margin:0 0 20px}
+.ctl{display:grid;grid-template-columns:120px 1fr 48px;gap:10px 12px;align-items:center;font-size:14px;color:var(--muted);margin-bottom:12px}
+.ctl output{color:var(--text);text-align:right}
+input[type=range]{width:100%;accent-color:#8e1b24}
+button{font:inherit;font-size:14px;color:var(--text);background:transparent;border:1px solid var(--strong);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{background:var(--panel)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}.seg button.on{background:var(--panel);border-color:var(--text)}
+.chk{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;color:var(--muted);margin:0 0 16px}
+.pg{border-radius:12px;overflow:hidden;border:1px solid var(--border);font-family:Manrope,sans-serif;position:relative}
+.sec{position:relative;padding:14px 18px}
+.g{position:absolute;inset:0}
+.in{position:relative}
+.hh{font:700 32px 'Playfair Display',serif;margin:2px 0 4px}
+.b{display:inline-block;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;background:#8e1b24;color:#f3ede3}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.card{border-radius:8px;padding:10px 12px;font-size:12px;position:relative;overflow:hidden}
+.card b{display:block;font:700 15px 'Playfair Display',serif;margin-bottom:2px}
+.ph{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.ph i{display:block;height:58px;border-radius:6px;background:#8a7a68}
+.tt{font:700 16px 'Playfair Display',serif;margin-bottom:8px}
+.logo{position:absolute;right:26px;top:22px;width:108px;height:108px;border-radius:50%;background:#ece4d4;overflow:hidden;border:6px solid rgba(236,228,212,.25)}
+.logo img{width:100%;height:100%;display:block}
+.mini{width:18px;height:18px;border-radius:50%;background:#ece4d4;overflow:hidden;display:inline-block}.mini img{width:100%;height:100%}
+#code{font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--muted);margin:14px 0 8px;word-break:break-word}
+#copied{font-size:13px;color:var(--muted);margin-left:8px}
+@media (max-width:560px){.ctl{grid-template-columns:90px 1fr 42px}.logo{width:72px;height:72px;right:12px}.hh{font-size:26px}.ph{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+<h1>Wise City · moss playground</h1>
+<p class="intro">Pick a layout and tune how transparent and matte the green is. Press "Copy settings" and paste the result into the chat.</p>
+
+<div class="ctl">
+<span>Layout</span><span class="seg"><button id="l1" class="on">1 · paper + cedar</button><button id="l3">3 · moss hero on paper</button></span><span></span>
+<label for="op">Green opacity</label><input id="op" type="range" min="35" max="100" step="1" value="100"><output id="opo">100%</output>
+<label for="mt">Matte</label><input id="mt" type="range" min="0" max="100" step="1" value="0"><output id="mto">0%</output>
+</div>
+<div class="chk"><label><input type="checkbox" id="grain" checked> Paper texture under green</label><label><input type="checkbox" id="wave" checked> Wave pattern under green</label></div>
+
+<div class="pg" id="pg">
+<div class="sec" id="hdr" style="padding:8px 18px;font-size:12px"><div class="g gr"></div><div class="in" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="mini"><img src="logo-black.png" alt=""></span><b style="font-family:'Playfair Display',serif">Wise City</b><span>Услуги</span><span>Мастера</span><span>Инфо</span></div></div>
+<div class="sec" id="hero" style="min-height:156px"><div class="g gr"></div><div class="in" style="max-width:62%"><div id="ey" style="font-size:10px;letter-spacing:.14em;font-weight:600">ТАТУ И ПИРСИНГ · МИНСК</div><div class="hh">Wise City</div><div id="lead" style="font-size:13px;margin-bottom:10px">Три тату-мастера, два пирсера, одна комната.</div><span class="b">Записаться</span></div>
+<div class="logo"><img src="logo-black.png" alt="Wise City logo"></div></div>
+<div class="sec" id="feat"><div class="in cards"><div class="card" id="c1"><div class="g"></div><div class="in"><b>Тату</b>консультация бесплатно</div></div><div class="card" id="c2"><div class="g"></div><div class="in"><b>Пирсинг</b>запись онлайн</div></div><div class="card" id="c3"><div class="g"></div><div class="in"><b>16+</b>с родителем</div></div></div></div>
+<div class="sec" id="works" style="background:#ece4d4;color:#211a17"><div class="tt">Наши работы</div><div class="ph"><i></i><i></i><i></i><i></i></div></div>
+<div class="sec" id="arts"><div class="in"><div class="tt">Мастера</div><div class="cards"><div class="card"><b>Alex</b>fine line</div><div class="card"><b>Mira</b>реализм</div><div class="card"><b>Dan</b>олдскул</div></div></div></div>
+<div class="sec" id="foot" style="font-size:12px;padding:12px 18px"><div class="g gr"></div><div class="in">Минск · ежедневно 11:00–20:00 · +375 00 000-00-00</div></div>
+</div>
+
+<p id="code"></p>
+<button id="copy">Copy settings</button><span id="copied" aria-live="polite"></span>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PAPER = [236, 228, 212], BASE = [47, 58, 44], MATTE = [104, 106, 94];
+const grainUrl = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .18 0 0 0 0 .14 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+const waveUrl = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cg fill='none' stroke='%23716729' stroke-width='1.2'%3E%3Ccircle cx='20' cy='20' r='18'/%3E%3Ccircle cx='20' cy='20' r='12'/%3E%3Ccircle cx='20' cy='20' r='6'/%3E%3Ccircle cx='0' cy='10' r='18'/%3E%3Ccircle cx='40' cy='10' r='18'/%3E%3C/g%3E%3C/svg%3E\")";
+let layout = 1;
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+const lum = (c) => { const f = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]; };
+
+function paint() {
+  const a = +$('op').value / 100, m = +$('mt').value / 100;
+  $('opo').textContent = Math.round(a * 100) + '%';
+  $('mto').textContent = Math.round(m * 100) + '%';
+  const g = mix(BASE, MATTE, m * 0.7);
+  const eff = mix(PAPER, g, a);
+  const dark = lum(eff) > 0.28;
+  const txt = dark ? '#211a17' : '#ece4d4', sub = dark ? '#4a3326' : '#d6cdb8', eyc = dark ? '#716729' : '#c9b98f';
+  const under = [$('wave').checked ? waveUrl : null, $('grain').checked ? grainUrl : null].filter(Boolean).join(',');
+  const glaze = `rgba(${g[0]},${g[1]},${g[2]},${a})`;
+  const green = (el) => { el.style.background = (under ? under + ',' : '') + hex(PAPER); el.style.color = txt; const gl = el.querySelector('.g'); if (gl) gl.style.background = glaze; };
+  const plain = (el, bg, fg) => { el.style.background = bg; el.style.color = fg; const gl = el.querySelector(':scope > .g'); if (gl) gl.style.background = 'transparent'; };
+
+  if (layout === 1) green($('hdr')); else plain($('hdr'), '#ece4d4', '#211a17');
+  green($('hero')); green($('foot'));
+  $('ey').style.color = eyc; $('lead').style.color = sub;
+  plain($('feat'), '#ece4d4', '#211a17');
+
+  const cards = ['c1', 'c2', 'c3'].map($);
+  const artCards = document.querySelectorAll('#arts .card');
+  if (layout === 1) {
+    cards.forEach((c) => { c.style.background = '#fbf7ef'; c.style.border = '1px solid #d8ccb4'; c.style.color = '#4a3326'; c.querySelector('.g').style.background = 'transparent'; });
+    plain($('arts'), '#4a3326', '#ece4d4');
+    artCards.forEach((c) => (c.style.background = 'rgba(255,255,255,.07)'));
+  } else {
+    green(cards[0]); cards[0].style.border = 'none';
+    [[cards[1], '#664c4c'], [cards[2], '#8e1b24']].forEach(([c, col]) => { c.style.background = col; c.style.border = 'none'; c.style.color = '#f3ede3'; c.querySelector('.g').style.background = 'transparent'; });
+    plain($('arts'), '#e3d8c3', '#211a17');
+    artCards.forEach((c) => (c.style.background = '#fbf7ef'));
+  }
+  $('code').textContent = `layout ${layout} · green rgba(${g.join(', ')}, ${a.toFixed(2)}) · on paper ≈ ${hex(eff)} · texture ${$('grain').checked ? 'on' : 'off'} · waves ${$('wave').checked ? 'on' : 'off'} · text ${dark ? 'dark' : 'light'}`;
+}
+
+$('l1').onclick = () => { layout = 1; $('l1').classList.add('on'); $('l3').classList.remove('on'); paint(); };
+$('l3').onclick = () => { layout = 3; $('l3').classList.add('on'); $('l1').classList.remove('on'); paint(); };
+['op', 'mt', 'grain', 'wave'].forEach((id) => $(id).addEventListener('input', paint));
+$('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('code').textContent); $('copied').textContent = 'Copied'; }
+  catch { $('copied').textContent = 'Select the line above and copy it'; }
+  setTimeout(() => ($('copied').textContent = ''), 2500);
+};
+paint();
+</script>
+</body>
+</html>
