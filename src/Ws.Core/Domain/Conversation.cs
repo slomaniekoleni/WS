@@ -12,6 +12,7 @@ public sealed class Conversation
     public string Language { get; set; } = Languages.English;
     /// <summary>AI asked for a human; staff should take over.</summary>
     public bool NeedsHuman { get; set; }
+    public string? HandoffReason { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime LastMessageAtUtc { get; set; }
 
@@ -24,6 +25,8 @@ public enum MessageRole
     Assistant,
     /// <summary>Written by a staff member who took over the chat.</summary>
     Staff,
+    /// <summary>Tool results sent back to Claude (API role: user). Not shown in transcripts.</summary>
+    ToolResult,
 }
 
 public sealed class ConversationMessage

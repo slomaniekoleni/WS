@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
+import ChatWidget from './ChatWidget'
 import { useData } from './data'
 import { useI18n } from './i18n'
 import Artists from './pages/Artists'
@@ -34,6 +35,7 @@ export default function App() {
         )}
       </main>
       <Footer />
+      <ChatWidget />
     </>
   )
 }

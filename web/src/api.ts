@@ -82,6 +82,12 @@ export interface BookingCreated {
   serviceName: string
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  text: string
+  at: string
+}
+
 /** Error from the API; `code` is the ProblemDetails type (e.g. "SlotTaken"). */
 export class ApiError extends Error {
   readonly status: number
@@ -114,4 +120,7 @@ export const api = {
       `/api/availability?serviceId=${serviceId}&from=${from}&to=${to}` + (artistId ? `&artistId=${artistId}` : ''),
     ),
   book: (body: CreateBooking) => request<BookingCreated>('/api/bookings', { method: 'POST', body: JSON.stringify(body) }),
+  chat: (body: { sessionId: string; message: string; language: Lang }) =>
+    request<{ reply: string; needsHuman: boolean }>('/api/chat', { method: 'POST', body: JSON.stringify(body) }),
+  chatHistory: (sessionId: string) => request<ChatMessage[]>(`/api/chat/${sessionId}`),
 }

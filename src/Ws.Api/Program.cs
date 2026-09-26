@@ -1,9 +1,12 @@
+using System.Threading.RateLimiting;
+using Anthropic;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Ws.Api;
 using Ws.Api.Endpoints;
 using Ws.Core.Data;
+using Ws.Core.Receptionist;
 using Ws.Core.Scheduling;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +27,26 @@ builder.Services.AddDbContext<WsDbContext>(o => o.UseSqlite($"Data Source={dbPat
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<BookingService>();
 
+// AI receptionist. Without Claude:ApiKey (user-secrets locally, Claude__ApiKey env on servers) the site works
+// and the chat endpoint answers 503.
+builder.Services.Configure<ReceptionistOptions>(builder.Configuration.GetSection(ReceptionistOptions.Section));
+var claudeKey = builder.Configuration["Claude:ApiKey"];
+if (!string.IsNullOrWhiteSpace(claudeKey))
+{
+    builder.Services.AddSingleton(new AnthropicClient { ApiKey = claudeKey });
+    builder.Services.AddScoped<ReceptionistTools>();
+    builder.Services.AddScoped<Receptionist>();
+}
+
+// Each chat message costs a Claude call: cap it per client IP.
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy(ChatEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 12, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(ws.CorsOrigins).AllowAnyHeader().AllowAnyMethod()));
@@ -38,6 +61,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await SeedData.EnsureSeededAsync(db);
     app.Logger.LogInformation("Database ready at {Path}", dbPath);
+    if (string.IsNullOrWhiteSpace(claudeKey)) app.Logger.LogWarning("Claude:ApiKey not set: AI chat is disabled");
 }
 
 app.UseSerilogRequestLogging();
@@ -47,10 +71,12 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
     StatusCodeSelector = ex => ex is BadHttpRequestException bad ? bad.StatusCode : StatusCodes.Status500InternalServerError,
 });
 app.UseCors();
+app.UseRateLimiter();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/health", () => Results.Ok("ok"));
 app.MapPublicApi();
+app.MapChatApi();
 
 // Built React site (web/dist -> wwwroot in the Docker image). Client-side routes fall back to index.html,
 // but unknown /api/* paths stay 404s.

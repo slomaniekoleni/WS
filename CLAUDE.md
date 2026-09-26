@@ -1,4 +1,4 @@
-﻿# WS (salon website + AI receptionist)
+# WS (salon website + AI receptionist)
 
 Website + AI receptionist for a tattoo & piercing salon: answers client questions, books appointments, sends reminders.
 
@@ -48,6 +48,7 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - `src/Ws.Api`: ASP.NET Core minimal APIs (`Endpoints/`), migrates + seeds on startup. Settings in `Ws:*` (`WsOptions`), env override e.g. `Ws__DatabasePath`
 - `src/Ws.Tests`: xUnit (slot rules + BookingService on in-memory SQLite)
 - `web/`: React + Vite + TS public site. `i18n.tsx` (EN/RU strings, lang in localStorage, default from browser), `data.tsx` (salon/services/artists per language), `pages/` (Home, Services, Artists, Info, Book). Times shown in the salon's time zone. Dev: `npm run dev --prefix web` (proxies /api to :5154); prod: the Docker image builds it into the API's wwwroot (SPA fallback, /api/* stays 404)
+- Claude key: `dotnet user-secrets set Claude:ApiKey <key> --project src/Ws.Api` (env `Claude__ApiKey` on servers). Without it the site works and chat answers 503.
 - Dev servers for the browser preview: `.claude/launch.json` (`api` on 5154, `web` on 5173)
 - Times stored as UTC; working hours are local to `Salon.TimeZoneId`. Translatable text = `LocalizedText { En, Ru }` stored as JSON.
 - Run: `dotnet run --project src/Ws.Api` (DB at `src/Ws.Api/data/ws.db`). Tests: `dotnet test Ws.slnx`. Docker: `docker compose up --build` (port 8080, DB in volume)
@@ -58,7 +59,7 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 1. Skeleton: solution, EF model, seed, logging, Docker <- DONE
 2. Availability + booking API + tests <- DONE (approve/decline/cancel in BookingService; no endpoints yet)
 3. Public site (EN/RU): services, artists/portfolio, booking form <- DONE (photos are Unsplash placeholders hotlinked from SeedData until the salon sends real work; reference images for tattoos not uploadable yet). Phones validated with libphonenumber on both sides (default region = `Salon.Country`), stored as E.164.
-4. AI receptionist + web chat widget <- NEXT
+4. AI receptionist + web chat widget <- BUILT, not yet tested against the live API (needs Claude:ApiKey). `Ws.Core/Receptionist`: prompt (cached, catalog from DB), tools over BookingService, manual tool loop, history stored as our own JSON blocks (thinking signatures kept). Model/effort in `Receptionist:*` config (default claude-opus-5, effort medium), server-side refusal fallbacks on. Web: `/api/chat` (rate-limited 12/min/IP) + `ChatWidget.tsx`
 5. Telegram: client bot, staff group (new booking -> approve/decline buttons, handoffs), 24h/2h reminders
 6. Admin panel: calendar, manage artists/services/hours, transcripts, staff login
 7. Demo polish + deploy

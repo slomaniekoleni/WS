@@ -78,6 +78,18 @@ const en = {
   'book.error.taken': 'Someone just took this time. Please pick another one.',
   'book.error.generic': 'Something went wrong. Please try again or contact us.',
 
+  'chat.open': 'Ask us',
+  'chat.close': 'Close chat',
+  'chat.title': 'Wise City',
+  'chat.subtitle': 'AI assistant · prices, aftercare, booking',
+  'chat.greeting': 'Hi! I can tell you about prices, artists and aftercare, or book you in. What are you thinking of?',
+  'chat.placeholder': 'Type a message…',
+  'chat.send': 'Send',
+  'chat.typing': 'Typing',
+  'chat.tooMany': 'Too many messages. Please wait a minute.',
+  'chat.unavailable': 'The chat is unavailable right now. Please call or message us.',
+  'chat.error': 'Message not sent. Please try again.',
+
   'footer.rights': 'Tattoo & piercing, Minsk',
   'common.error': 'Could not load data. Please refresh the page.',
 }
@@ -159,6 +171,18 @@ const ru: Record<Key, string> = {
   'book.done.again': 'Записаться ещё',
   'book.error.taken': 'Это время только что заняли. Выберите, пожалуйста, другое.',
   'book.error.generic': 'Что-то пошло не так. Попробуйте ещё раз или свяжитесь с нами.',
+
+  'chat.open': 'Написать нам',
+  'chat.close': 'Закрыть чат',
+  'chat.title': 'Wise City',
+  'chat.subtitle': 'AI-ассистент · цены, уход, запись',
+  'chat.greeting': 'Привет! Расскажу о ценах, мастерах и уходе или запишу вас. Что планируете?',
+  'chat.placeholder': 'Напишите сообщение…',
+  'chat.send': 'Отправить',
+  'chat.typing': 'Печатает',
+  'chat.tooMany': 'Слишком много сообщений. Подождите минуту.',
+  'chat.unavailable': 'Чат сейчас недоступен. Позвоните или напишите нам.',
+  'chat.error': 'Сообщение не отправилось. Попробуйте ещё раз.',
 
   'footer.rights': 'Тату и пирсинг, Минск',
   'common.error': 'Не удалось загрузить данные. Обновите страницу.',
