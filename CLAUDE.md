@@ -36,10 +36,11 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - Every client booking starts **Pending** and needs the artist's approval (holds the slot meanwhile). Staff-created bookings are confirmed immediately.
 - Staff notifications + approvals: Telegram staff group.
 - Hosting: just Docker for now, decide later.
+- Minsk (`Europe/Minsk`, UTC+3, no DST), prices in BYN, room has 2 workstations.
 
 ## Still open
 
-- Real salon details: city/time zone (placeholder Europe/Warsaw), currency (placeholder EUR), address, artists, prices, number of workstations in the room (placeholder 3)
+- Real salon details: address, artist names/styles/hours, prices (current BYN numbers are guesses)
 
 ## Codebase
 

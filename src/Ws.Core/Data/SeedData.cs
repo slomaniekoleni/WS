@@ -16,21 +16,21 @@ public static class SeedData
         var salon = new Salon
         {
             Name = "Wise City",
-            TimeZoneId = "Europe/Warsaw", // placeholder until the salon's city is known
-            Currency = "EUR",
-            Address = new("1 Example Street, City", "ул. Примерная, 1, Город"),
-            Phone = "+000 000 000 000",
+            TimeZoneId = "Europe/Minsk",
+            Currency = "BYN",
+            Address = new("1 Example Street, Minsk", "ул. Примерная, 1, Минск"),
+            Phone = "+375 00 000-00-00",
             Instagram = "wisecity.tattoo",
             About = new(
-                "Wise City is a tattoo & piercing studio: three tattoo artists, two piercers, one cozy room.",
-                "Wise City: тату и пирсинг студия. Три тату-мастера, два пирсера, одна уютная комната."),
+                "Wise City is a tattoo & piercing studio: three tattoo artists, two piercers, one cozy room in Minsk.",
+                "Wise City: тату и пирсинг студия в Минске. Три тату-мастера, два пирсера, одна уютная комната."),
             Policies = new(PoliciesEn, PoliciesRu),
             MinAgeWithGuardian = 16,
             MinAgeSolo = 18,
             OpeningHours = Enum.GetValues<DayOfWeek>()
                 .Select(d => new SalonHours { Day = d, Open = new(11, 0), Close = new(20, 0) })
                 .ToList(),
-            Rooms = [new Room { Name = "Main room", Workstations = 3 }],
+            Rooms = [new Room { Name = "Main room", Workstations = 2 }],
         };
         db.Salons.Add(salon);
         await db.SaveChangesAsync(ct);
@@ -97,25 +97,25 @@ public static class SeedData
             S(ServiceKind.TattooConsultation, "Tattoo consultation", "Консультация по тату", 30, 0, null,
                 descEn: "Free. Discuss your idea, size, placement and style; the artist estimates time and price.",
                 descRu: "Бесплатно. Обсудим идею, размер, место и стиль; мастер оценит время и стоимость."),
-            S(ServiceKind.TattooSession, "Tattoo session: small (up to ~10 cm)", "Тату-сеанс: маленькая (до ~10 см)", 120, 30, 80, 150, online: false),
-            S(ServiceKind.TattooSession, "Tattoo session: medium (half day)", "Тату-сеанс: средняя (полдня)", 240, 30, 150, 300, online: false),
-            S(ServiceKind.TattooSession, "Tattoo session: full day", "Тату-сеанс: полный день", 360, 30, 300, 500, online: false),
+            S(ServiceKind.TattooSession, "Tattoo session: small (up to ~10 cm)", "Тату-сеанс: маленькая (до ~10 см)", 120, 30, 150, 300, online: false),
+            S(ServiceKind.TattooSession, "Tattoo session: medium (half day)", "Тату-сеанс: средняя (полдня)", 240, 30, 300, 600, online: false),
+            S(ServiceKind.TattooSession, "Tattoo session: full day", "Тату-сеанс: полный день", 360, 30, 600, 1000, online: false),
             S(ServiceKind.TattooTouchUp, "Tattoo touch-up", "Коррекция тату", 60, 15, null,
                 descEn: "Free within 3 months after the session.", descRu: "Бесплатно в течение 3 месяцев после сеанса."),
 
-            S(ServiceKind.Piercing, "Earlobe piercing", "Прокол мочки уха", 30, 15, 30),
-            S(ServiceKind.Piercing, "Helix / cartilage piercing", "Прокол хряща (хеликс)", 30, 15, 40),
-            S(ServiceKind.Piercing, "Tragus piercing", "Прокол козелка (трагус)", 30, 15, 40),
-            S(ServiceKind.Piercing, "Industrial piercing", "Индастриал", 45, 15, 60),
-            S(ServiceKind.Piercing, "Nostril piercing", "Прокол крыла носа", 30, 15, 40),
-            S(ServiceKind.Piercing, "Septum piercing", "Прокол септума", 30, 15, 50),
-            S(ServiceKind.Piercing, "Eyebrow piercing", "Прокол брови", 30, 15, 40),
-            S(ServiceKind.Piercing, "Lip / labret piercing", "Прокол губы (лабрет)", 30, 15, 45),
-            S(ServiceKind.Piercing, "Tongue piercing", "Прокол языка", 30, 15, 50),
-            S(ServiceKind.Piercing, "Navel piercing", "Прокол пупка", 30, 15, 50),
-            S(ServiceKind.Piercing, "Nipple piercing", "Прокол соска", 30, 15, 50, privateRoom: true, adults: true),
-            S(ServiceKind.Piercing, "Intimate piercing", "Интимный пирсинг", 45, 15, 70, privateRoom: true, adults: true),
-            S(ServiceKind.JewelryChange, "Jewelry change", "Замена украшения", 15, 5, 10),
+            S(ServiceKind.Piercing, "Earlobe piercing", "Прокол мочки уха", 30, 15, 50),
+            S(ServiceKind.Piercing, "Helix / cartilage piercing", "Прокол хряща (хеликс)", 30, 15, 70),
+            S(ServiceKind.Piercing, "Tragus piercing", "Прокол козелка (трагус)", 30, 15, 70),
+            S(ServiceKind.Piercing, "Industrial piercing", "Индастриал", 45, 15, 100),
+            S(ServiceKind.Piercing, "Nostril piercing", "Прокол крыла носа", 30, 15, 70),
+            S(ServiceKind.Piercing, "Septum piercing", "Прокол септума", 30, 15, 90),
+            S(ServiceKind.Piercing, "Eyebrow piercing", "Прокол брови", 30, 15, 70),
+            S(ServiceKind.Piercing, "Lip / labret piercing", "Прокол губы (лабрет)", 30, 15, 80),
+            S(ServiceKind.Piercing, "Tongue piercing", "Прокол языка", 30, 15, 90),
+            S(ServiceKind.Piercing, "Navel piercing", "Прокол пупка", 30, 15, 90),
+            S(ServiceKind.Piercing, "Nipple piercing", "Прокол соска", 30, 15, 90, privateRoom: true, adults: true),
+            S(ServiceKind.Piercing, "Intimate piercing", "Интимный пирсинг", 45, 15, 130, privateRoom: true, adults: true),
+            S(ServiceKind.JewelryChange, "Jewelry change", "Замена украшения", 15, 5, 20),
         ];
     }
 

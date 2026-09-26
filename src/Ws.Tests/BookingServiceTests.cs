@@ -15,7 +15,7 @@ public sealed class BookingServiceTests : IAsyncLifetime
     private WsDbContext _db = null!;
     private BookingService _svc = null!;
 
-    // Monday 2026-10-05 14:00 in Warsaw (CEST) = 12:00 UTC. Both piercers (Kate, Leo) work Mondays.
+    // Monday 2026-10-05 15:00 in Minsk (UTC+3) = 12:00 UTC. Both piercers (Kate, Leo) work Mondays.
     private static readonly DateTime MondayNoonUtc = new(2026, 10, 5, 12, 0, 0, DateTimeKind.Utc);
 
     public async Task InitializeAsync()
