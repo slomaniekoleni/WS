@@ -1,4 +1,4 @@
-﻿# WS (salon website + AI receptionist)
+# WS (salon website + AI receptionist)
 
 Website + AI receptionist for a tattoo & piercing salon: answers client questions, books appointments, sends reminders.
 
@@ -40,11 +40,12 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 
 ## Design (Wise City)
 
-- "Moss forest" theme (picked by the owner from palette mockups based on their Japanese colour references): moss green base `#2f3a2c`, oxblood buttons `--accent-fill #8e1b24`, warm red text accent `--accent`, tatami `#c9b98f` eyebrows, fog-paper text `#ece4d4`. Seigaiha waves + flowing water lines in the hero, oxblood brush stroke, small red hanko marks on section headings, vertical é”ç£¨.
+- "Moss forest" theme (picked by the owner from palette mockups based on their Japanese colour references): moss green base `#2f3a2c`, oxblood buttons `--accent-fill #8e1b24`, warm red text accent `--accent`, tatami `#c9b98f` eyebrows, fog-paper text `#ece4d4`. Seigaiha waves + flowing water lines in the hero, oxblood brush stroke, small red hanko marks on section headings, vertical 達磨.
 - Headings in Playfair Display (serif, has Cyrillic), body in Manrope.
-- Logo: the salon's Daruma in an ensÅ circle (`web/public/brand/logo-original.png`; `logo-black.png` / `logo-white.png` are transparent versions, plus favicon and apple-touch-icon). Shown as black ink on a paper disc (`<Seal>`), never inverted.
+- Logo: the salon's Daruma in an ensō circle (`web/public/brand/logo-original.png`; `logo-black.png` / `logo-white.png` are transparent versions, plus favicon and apple-touch-icon). Shown as black ink on a paper disc (`<Seal>`), never inverted.
 - **The Daruma's painted eye is the one on the viewer's right, exactly as on the logo.** Any Daruma drawn or edited must keep that.
 - Noto Serif JP only for the kanji (subset).
+- Windows note: never edit non-ASCII files with PowerShell 5.1 `Get-Content`/`Set-Content` (it garbles UTF-8 like 達磨 and adds a BOM); use the Edit tool or .NET with explicit UTF-8.
 
 ## Still open
 
