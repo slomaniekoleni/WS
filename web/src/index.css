@@ -29,6 +29,40 @@
   color-scheme: light;
 }
 
+/* "Terracotta Japandi": warm beige, natural panel, walnut text, terracotta clay for actions and stamps. */
+:root[data-theme='terracotta'] {
+  --bg: #e5d9c5;
+  --bg-deep: #d8c9ae;
+  --bg-raised: #f7f5f0;
+  --bg-hover: #ddd0b8;
+  --border: #d0c0a3;
+  --text: #2c2b29;
+  --muted: #6f5f52;
+  --accent: #8e4127;
+  --accent-fill: #98472a;
+  --accent-fill-hover: #7f3b22;
+  --accent-ink: #f7f5f0;
+  --tatami: #6f6152;
+  --tatami-panel: #cbbca4;
+  --stamp: #98472a;
+  --paper: #f7f5f0;
+  --ink: #2c2b29;
+  --danger: #98472a;
+  --radius: 10px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  color-scheme: light;
+}
+
+/* Terracotta: natural panel on the right with a clay band at the bottom (no shoji grid). */
+[data-theme='terracotta'] .hero::before {
+  background: linear-gradient(180deg, var(--tatami-panel) 68%, var(--accent-fill) 68%);
+}
+
+/* The kanji stamp sits on the clay band, so it's walnut instead of clay. */
+:root[data-theme='terracotta'] .hero-seal .kanji-vertical {
+  background: #4a3326;
+}
+
 /* "Moss forest": deep moss green base, oxblood red for actions, tatami and fog-paper tones for text. */
 :root[data-theme='moss'] {
   --bg: #2f3a2c;
@@ -422,7 +456,7 @@ textarea {
 }
 
 /* Cormorant has a small x-height: give its headings a bit more size. */
-:root:not([data-theme='moss']) h3 {
+:root:not([data-theme]) h3 {
   font-size: 1.35rem;
 }
 

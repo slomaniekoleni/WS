@@ -1,9 +1,12 @@
-/** Visual themes defined in index.css. Switch with ?theme=moss (remembered in this browser). */
-const THEMES = ['shoji', 'moss'] as const
+/**
+ * Visual themes defined in index.css. Switch with ?theme=terracotta|shoji|moss (remembered in this browser).
+ * "shoji" is the base :root palette (no data-theme attribute); the others override it.
+ */
+const THEMES = ['terracotta', 'shoji', 'moss'] as const
 type Theme = (typeof THEMES)[number]
-const DEFAULT: Theme = 'shoji'
+const DEFAULT: Theme = 'terracotta'
 
-const META_COLOR: Record<Theme, string> = { shoji: '#f4f0e8', moss: '#2f3a2c' }
+const META_COLOR: Record<Theme, string> = { terracotta: '#e5d9c5', shoji: '#f4f0e8', moss: '#2f3a2c' }
 
 export function applyTheme() {
   let theme: Theme = DEFAULT
@@ -15,7 +18,7 @@ export function applyTheme() {
   } catch {
     if (THEMES.includes(fromUrl as Theme)) theme = fromUrl as Theme
   }
-  if (theme === DEFAULT) delete document.documentElement.dataset.theme
+  if (theme === 'shoji') delete document.documentElement.dataset.theme
   else document.documentElement.dataset.theme = theme
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', META_COLOR[theme])
 }
