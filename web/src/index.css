@@ -5,9 +5,15 @@
   --border: #2d2925;
   --text: #efe9e1;
   --muted: #a39a8f;
-  --accent: #d9a15b;
-  --accent-ink: #1a1208;
-  --danger: #e2735f;
+  /* Daruma red: --accent for text/borders on dark (readable), --accent-fill behind white text. */
+  --accent: #e5574d;
+  --accent-fill: #c8312b;
+  --accent-fill-hover: #d93a33;
+  --accent-ink: #ffffff;
+  --paper: #f3eee4;
+  --ink: #111111;
+  --gold: #d9a15b;
+  --danger: #f08a78;
   --radius: 14px;
   --font-display: 'Unbounded', system-ui, sans-serif;
   --font-body: 'Manrope', system-ui, sans-serif;
@@ -143,11 +149,35 @@ textarea {
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.15rem;
   text-decoration: none;
   letter-spacing: 0.02em;
+}
+
+/* Logo on a paper disc, like a hanko seal (keeps the original ink and the painted eye). */
+.seal {
+  flex: none;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.seal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brush {
+  display: block;
+  color: var(--accent-fill);
+  margin: -4px 0 18px;
 }
 
 .nav {
@@ -218,7 +248,7 @@ textarea {
     gap: 12px;
     font-size: 0.9rem;
   }
-  .header .logo {
+  .header .logo span {
     display: none;
   }
 }
@@ -226,9 +256,9 @@ textarea {
 /* Buttons */
 .btn {
   display: inline-block;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-fill);
   border-radius: 999px;
   padding: 12px 24px;
   font-weight: 700;
@@ -293,29 +323,101 @@ textarea {
 
 /* Home */
 .hero {
-  padding: 120px 0 96px;
-  background:
-    linear-gradient(90deg, var(--bg) 25%, color-mix(in srgb, var(--bg) 55%, transparent) 65%, color-mix(in srgb, var(--bg) 30%, transparent)),
-    linear-gradient(0deg, var(--bg), transparent 40%),
-    var(--cover, none) center 35% / cover no-repeat,
-    radial-gradient(ellipse at 80% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
-    var(--bg);
+  position: relative;
+  overflow: hidden;
+  padding: 96px 0 88px;
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
-@media (max-width: 720px) {
+/* Cover photo as a faint grey ink wash. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cover, none) center 35% / cover no-repeat;
+  filter: grayscale(1) contrast(1.1);
+  opacity: 0.16;
+}
+
+/* Seigaiha (ocean wave) pattern in faint daruma red, fading in from the right. */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 45%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28' viewBox='0 0 56 28'%3E%3Cg fill='none' stroke='%23c8312b' stroke-width='1.3'%3E%3Cpath d='M0 28a28 28 0 0 1 56 0M8 28a20 20 0 0 1 40 0M16 28a12 12 0 0 1 24 0M24 28a4 4 0 0 1 8 0'/%3E%3Cpath d='M-28 14a28 28 0 0 1 56 0M-20 14a20 20 0 0 1 40 0M-12 14a12 12 0 0 1 24 0M-4 14a4 4 0 0 1 8 0M28 14a28 28 0 0 1 56 0M36 14a20 20 0 0 1 40 0M44 14a12 12 0 0 1 24 0M52 14a4 4 0 0 1 8 0'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.22;
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 40px;
+  align-items: center;
+}
+
+.hero-seal {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.hero-seal .seal {
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--paper) 8%, transparent), 0 24px 60px rgb(0 0 0 / 0.5);
+}
+
+.kanji-vertical {
+  writing-mode: vertical-rl;
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+
+@media (max-width: 860px) {
   .hero {
-    padding: 72px 0 56px;
-    background:
-      linear-gradient(0deg, var(--bg) 10%, color-mix(in srgb, var(--bg) 70%, transparent)),
-      var(--cover, none) center / cover no-repeat,
-      var(--bg);
+    padding: 40px 0 56px;
+  }
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .hero-seal {
+    order: -1;
+  }
+  .hero-seal .seal {
+    width: 140px !important;
+    height: 140px !important;
+  }
+  .kanji-vertical {
+    font-size: 1.3rem;
+  }
+  .hero::after {
+    inset: 0;
+    mask-image: linear-gradient(180deg, #000, transparent 55%);
   }
 }
 
 .hero h1 {
-  font-size: clamp(3rem, 11vw, 7rem);
-  margin-bottom: 0.2em;
+  font-size: clamp(3rem, 9vw, 6.2rem);
+  margin-bottom: 0.1em;
+}
+
+/* Section headings get a small red hanko mark. */
+.section > h2::before {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.5em;
+  border-radius: 2px;
+  background: var(--accent-fill);
+  vertical-align: 0.12em;
+  transform: rotate(4deg);
 }
 
 .hero .lead {
@@ -390,8 +492,9 @@ textarea {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #7a4b22);
-  color: var(--accent-ink);
+  background: var(--paper);
+  border: 2px solid var(--accent-fill);
+  color: var(--ink);
   display: grid;
   place-items: center;
   font-family: var(--font-display);
@@ -795,8 +898,8 @@ textarea {
 }
 
 .chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--accent-ink);
   font-weight: 700;
 }
@@ -936,7 +1039,7 @@ textarea {
   padding: 12px 18px;
   border: none;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-weight: 700;
   cursor: pointer;
@@ -1036,7 +1139,7 @@ textarea {
 
 .bubble.user {
   align-self: flex-end;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   border-bottom-right-radius: 4px;
 }

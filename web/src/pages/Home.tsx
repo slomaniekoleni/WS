@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
-import { ArtistCard, OpeningHours } from '../components'
+import { ArtistCard, BrushStroke, OpeningHours, Seal } from '../components'
 import { useData } from '../data'
 import { Carousel } from '../gallery'
 import { useI18n } from '../i18n'
@@ -19,17 +19,26 @@ export default function Home() {
         className="hero"
         style={salon.coverImageUrl ? { '--cover': `url("${salon.coverImageUrl}")` } as CSSProperties : undefined}
       >
-        <div className="container">
-          <p className="eyebrow">{t('home.tagline')}</p>
-          <h1>{salon.name}</h1>
-          <p className="lead">{t('home.lead')}</p>
-          <div className="hero-actions">
-            <Link to="/book" className="btn">
-              {t('home.cta.book')}
-            </Link>
-            <Link to="/services" className="btn btn-ghost">
-              {t('home.cta.services')}
-            </Link>
+        <div className="container hero-inner">
+          <div className="hero-text">
+            <p className="eyebrow">{t('home.tagline')}</p>
+            <h1>{salon.name}</h1>
+            <BrushStroke />
+            <p className="lead">{t('home.lead')}</p>
+            <div className="hero-actions">
+              <Link to="/book" className="btn">
+                {t('home.cta.book')}
+              </Link>
+              <Link to="/services" className="btn btn-ghost">
+                {t('home.cta.services')}
+              </Link>
+            </div>
+          </div>
+          <div className="hero-seal" aria-hidden>
+            <Seal size={320} />
+            <span className="kanji-vertical" lang="ja">
+              達磨
+            </span>
           </div>
         </div>
       </section>

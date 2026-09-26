@@ -39,6 +39,34 @@ export function OpeningHours({ salon }: { salon: Salon }) {
   )
 }
 
+/**
+ * The salon's Daruma logo on a paper disc, like a hanko seal. Kept as black ink on paper (not inverted)
+ * so the painted eye stays exactly as on the real logo.
+ */
+export function Seal({ size }: { size: number }) {
+  return (
+    <span className="seal" style={{ width: size, height: size }}>
+      <img src="/brand/logo-black.png" alt="Wise City" width={size} height={size} />
+    </span>
+  )
+}
+
+/** Hand-drawn red brush stroke used under headings. */
+export function BrushStroke({ width = 240 }: { width?: number }) {
+  return (
+    <svg className="brush" width={width} height={14} viewBox="0 0 240 14" aria-hidden>
+      <path
+        d="M3 9C40 4 90 3 130 6s80 4 107-2"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path d="M20 10c50-3 120-1 190-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" opacity=".5" />
+    </svg>
+  )
+}
+
 export function ArtistCard({ artist }: { artist: Artist }) {
   const { t, styleName } = useI18n()
   const [open, setOpen] = useState<number | null>(null)
