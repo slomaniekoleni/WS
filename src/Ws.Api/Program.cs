@@ -52,4 +52,10 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapGet("/health", () => Results.Ok("ok"));
 app.MapPublicApi();
 
+// Built React site (web/dist -> wwwroot in the Docker image). Client-side routes fall back to index.html,
+// but unknown /api/* paths stay 404s.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
+
 app.Run();

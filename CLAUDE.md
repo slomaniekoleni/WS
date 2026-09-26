@@ -47,6 +47,8 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - `src/Ws.Core`: domain (`Domain/`), EF Core `WsDbContext` + migrations + placeholder seed (`Data/`), availability + booking lifecycle (`Scheduling/`: `SlotFinder` is pure logic, `BookingService` loads data and writes)
 - `src/Ws.Api`: ASP.NET Core minimal APIs (`Endpoints/`), migrates + seeds on startup. Settings in `Ws:*` (`WsOptions`), env override e.g. `Ws__DatabasePath`
 - `src/Ws.Tests`: xUnit (slot rules + BookingService on in-memory SQLite)
+- `web/`: React + Vite + TS public site. `i18n.tsx` (EN/RU strings, lang in localStorage, default from browser), `data.tsx` (salon/services/artists per language), `pages/` (Home, Services, Artists, Info, Book). Times shown in the salon's time zone. Dev: `npm run dev --prefix web` (proxies /api to :5154); prod: the Docker image builds it into the API's wwwroot (SPA fallback, /api/* stays 404)
+- Dev servers for the browser preview: `.claude/launch.json` (`api` on 5154, `web` on 5173)
 - Times stored as UTC; working hours are local to `Salon.TimeZoneId`. Translatable text = `LocalizedText { En, Ru }` stored as JSON.
 - Run: `dotnet run --project src/Ws.Api` (DB at `src/Ws.Api/data/ws.db`). Tests: `dotnet test Ws.slnx`. Docker: `docker compose up --build` (port 8080, DB in volume)
 - New migration: `dotnet ef migrations add <Name> --project src/Ws.Core --startup-project src/Ws.Api --output-dir Data/Migrations`
@@ -55,8 +57,8 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 
 1. Skeleton: solution, EF model, seed, logging, Docker <- DONE
 2. Availability + booking API + tests <- DONE (approve/decline/cancel in BookingService; no endpoints yet)
-3. Public site (EN/RU): services, artists/portfolio, booking form <- NEXT
-4. AI receptionist + web chat widget
+3. Public site (EN/RU): services, artists/portfolio, booking form <- DONE (no real photos/portfolio yet; reference images for tattoos not uploadable yet)
+4. AI receptionist + web chat widget <- NEXT
 5. Telegram: client bot, staff group (new booking -> approve/decline buttons, handoffs), 24h/2h reminders
 6. Admin panel: calendar, manage artists/services/hours, transcripts, staff login
 7. Demo polish + deploy
