@@ -59,6 +59,8 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - `src/Ws.Tests`: xUnit (slot rules + BookingService on in-memory SQLite)
 - `web/`: React + Vite + TS public site. `i18n.tsx` (EN/RU strings, lang in localStorage, default from browser), `data.tsx` (salon/services/artists per language), `pages/` (Home, Services, Artists, Info, Book). Times shown in the salon's time zone. Dev: `npm run dev --prefix web` (proxies /api to :5154); prod: the Docker image builds it into the API's wwwroot (SPA fallback, /api/* stays 404)
 - Claude key: `dotnet user-secrets set Claude:ApiKey <key> --project src/Ws.Api` (env `Claude__ApiKey` on servers). Without it the site works and chat answers 503.
+- The repo is **public** (since 2026-09-26): never commit secrets, real client data or the DB.
+- Design playground: source in `design/playground/`, published to GitHub Pages from the `gh-pages` branch (https://slomaniekoleni.github.io/WS/). To update: copy the folder's files onto the `gh-pages` branch and push.
 - Dev servers for the browser preview: `.claude/launch.json` (`api` on 5154, `web` on 5173)
 - Times stored as UTC; working hours are local to `Salon.TimeZoneId`. Translatable text = `LocalizedText { En, Ru }` stored as JSON.
 - Run: `dotnet run --project src/Ws.Api` (DB at `src/Ws.Api/data/ws.db`). Tests: `dotnet test Ws.slnx`. Docker: `docker compose up --build` (port 8080, DB in volume)
