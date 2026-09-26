@@ -1,12 +1,12 @@
 /**
- * Visual themes defined in index.css. Switch with ?theme=terracotta|shoji|moss (remembered in this browser).
+ * Visual themes defined in index.css. Switch with ?theme=bark|terracotta|shoji|moss (remembered in this browser).
  * "shoji" is the base :root palette (no data-theme attribute); the others override it.
  */
-const THEMES = ['terracotta', 'shoji', 'moss'] as const
+const THEMES = ['bark', 'terracotta', 'shoji', 'moss'] as const
 type Theme = (typeof THEMES)[number]
-const DEFAULT: Theme = 'terracotta'
+const DEFAULT: Theme = 'bark'
 
-const META_COLOR: Record<Theme, string> = { terracotta: '#e5d9c5', shoji: '#f4f0e8', moss: '#2f3a2c' }
+const META_COLOR: Record<Theme, string> = { bark: '#f3e9dc', terracotta: '#e5d9c5', shoji: '#f4f0e8', moss: '#2f3a2c' }
 
 export function applyTheme() {
   let theme: Theme = DEFAULT

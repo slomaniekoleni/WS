@@ -63,6 +63,58 @@
   background: #4a3326;
 }
 
+/* "Bark and earth": light wood, bark rust for actions, earth-brown text, forest green blocks. */
+:root[data-theme='bark'] {
+  --bg: #f3e9dc;
+  --bg-deep: #e9dccb;
+  --bg-raised: #faf4ec;
+  --bg-hover: #eadccb;
+  --border: #e0cdb6;
+  --text: #3f1c11;
+  --muted: #6d4638;
+  --accent: #8b2e00;
+  --accent-fill: #8b2e00;
+  --accent-fill-hover: #722600;
+  --accent-ink: #f3e9dc;
+  --tatami: #3d3b2c;
+  --forest: #3d3b2c;
+  --wood: #d9b99b;
+  --stamp: #8b2e00;
+  --paper: #faf4ec;
+  --ink: #3f1c11;
+  --danger: #8b2e00;
+  --radius: 10px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  color-scheme: light;
+}
+
+/* Bark: concentric wood rings behind the logo, fading out at the edges. */
+[data-theme='bark'] .hero::before {
+  background: repeating-radial-gradient(ellipse 60% 70% at 50% 50%, transparent 0 22px, var(--wood) 22px 24px);
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, #000 40%, transparent 75%);
+}
+
+@media (max-width: 860px) {
+  [data-theme='bark'] .hero::before {
+    background: repeating-radial-gradient(ellipse 45% 60% at 22% 55%, transparent 0 16px, var(--wood) 16px 18px);
+    mask-image: radial-gradient(ellipse 60% 90% at 22% 55%, #000 40%, transparent 80%);
+  }
+}
+
+/* Bark: the three intro cards are forest-green blocks. */
+[data-theme='bark'] .feature {
+  background: var(--forest);
+  border-color: var(--forest);
+}
+
+[data-theme='bark'] .feature h3 {
+  color: #f3e9dc;
+}
+
+[data-theme='bark'] .feature .muted {
+  color: #d9c7b0;
+}
+
 /* "Moss forest": deep moss green base, oxblood red for actions, tatami and fog-paper tones for text. */
 :root[data-theme='moss'] {
   --bg: #2f3a2c;
@@ -315,7 +367,14 @@ textarea {
     gap: 12px;
     font-size: 0.9rem;
   }
-  .header .logo span {
+  .header .logo > span:not(.seal) {
+    display: none;
+  }
+}
+
+/* Very narrow phones: the header can't fit the book button too (the hero and chat still offer booking). */
+@media (max-width: 420px) {
+  .header-actions .btn {
     display: none;
   }
 }
