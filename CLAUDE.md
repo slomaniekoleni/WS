@@ -38,6 +38,13 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - Hosting: just Docker for now, decide later.
 - Minsk (`Europe/Minsk`, UTC+3, no DST), prices in BYN, room has 2 workstations.
 
+## Design (Wise City)
+
+- Japanese ink style on the dark site: daruma red (`--accent` for text, `--accent-fill` for buttons), paper `--paper`, seigaiha waves, red brush strokes, small red hanko marks on section headings, vertical 達磨.
+- Logo: the salon's Daruma in an ensō circle (`web/public/brand/logo-original.png`; `logo-black.png` / `logo-white.png` are transparent versions, plus favicon and apple-touch-icon). Shown as black ink on a paper disc (`<Seal>`), never inverted.
+- **The Daruma's painted eye is the one on the viewer's right, exactly as on the logo.** Any Daruma drawn or edited must keep that.
+- Fonts: Unbounded + Manrope (both have Cyrillic); Noto Serif JP only for the kanji (subset).
+
 ## Still open
 
 - Real salon details: address, artist names/styles/hours, prices (current BYN numbers are guesses)
