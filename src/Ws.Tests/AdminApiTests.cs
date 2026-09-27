@@ -21,14 +21,12 @@ public sealed class AdminApiTests : IClassFixture<AdminApiTests.App>
         {
             // Not "Development": user-secrets (real bot token, Claude key) must never load in tests.
             builder.UseEnvironment("Testing");
-            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Ws:DatabasePath"] = _dbPath,
-                ["Admin:Login"] = "owner",
-                ["Admin:Password"] = Password,
-                ["Telegram:BotToken"] = "",
-                ["Claude:ApiKey"] = "",
-            }));
+            // UseSetting (not ConfigureAppConfiguration): Program.cs reads some of these before Build().
+            builder.UseSetting("Ws:DatabasePath", _dbPath);
+            builder.UseSetting("Admin:Login", "owner");
+            builder.UseSetting("Admin:Password", Password);
+            builder.UseSetting("Telegram:BotToken", "");
+            builder.UseSetting("Claude:ApiKey", "");
         }
 
         protected override void Dispose(bool disposing)
