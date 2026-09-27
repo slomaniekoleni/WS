@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ws.Core.Data;
 using Ws.Core.Domain;
+using Ws.Core.Notifications;
 
 namespace Ws.Core.Scheduling;
 
@@ -50,8 +51,10 @@ public sealed record BookingResult(Booking? Booking, BookingError Error)
 public sealed record ArtistSlots(int ArtistId, string ArtistName, IReadOnlyList<DateTime> SlotsUtc);
 
 /// <summary>Availability lookups and booking lifecycle. Channel-agnostic: website, AI and admin all go through here.</summary>
-public sealed class BookingService(WsDbContext db, TimeProvider clock)
+public sealed class BookingService(WsDbContext db, TimeProvider clock, IStaffNotifier? notifier = null)
 {
+    private readonly IStaffNotifier _notifier = notifier ?? NullStaffNotifier.Instance;
+
     // SQLite has a single writer anyway; this makes check-then-insert atomic within the process.
     // With Postgres + several instances this becomes a serializable transaction / advisory lock.
     private static readonly SemaphoreSlim WriteLock = new(1, 1);
@@ -155,6 +158,9 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock)
             await db.SaveChangesAsync(ct);
             booking.Artist = link.Artist;
             booking.Service = service;
+
+            // Client requests wait for an artist's approval: tell the team (staff-made bookings are already confirmed).
+            if (booking.Status == BookingStatus.Pending) _notifier.BookingRequested(BookingNotice.From(booking, zone));
             return new BookingResult(booking, BookingError.None);
         }
         finally

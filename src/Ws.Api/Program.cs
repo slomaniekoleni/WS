@@ -5,7 +5,9 @@ using Serilog;
 using Serilog.Formatting.Compact;
 using Ws.Api;
 using Ws.Api.Endpoints;
+using Ws.Api.Telegram;
 using Ws.Core.Data;
+using Ws.Core.Notifications;
 using Ws.Core.Receptionist;
 using Ws.Core.Scheduling;
 
@@ -38,6 +40,26 @@ if (!string.IsNullOrWhiteSpace(claudeKey))
     builder.Services.AddScoped<Receptionist>();
 }
 
+// Telegram: client bot, staff group (booking approvals, AI handoffs), reminders. Off without Telegram:BotToken.
+builder.Services.Configure<TelegramOptions>(builder.Configuration.GetSection(TelegramOptions.Section));
+builder.Services.AddScoped<Reminders>();
+var telegramToken = builder.Configuration["Telegram:BotToken"];
+if (!string.IsNullOrWhiteSpace(telegramToken))
+{
+    // Long polling holds requests for up to PollTimeoutSeconds, so the client timeout must be longer.
+    builder.Services.AddHttpClient(TelegramApi.HttpClientName, c => c.Timeout = TimeSpan.FromSeconds(90));
+    builder.Services.AddSingleton<TelegramApi>();
+    builder.Services.AddSingleton<TelegramStaffNotifier>();
+    builder.Services.AddSingleton<IStaffNotifier>(sp => sp.GetRequiredService<TelegramStaffNotifier>());
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<TelegramStaffNotifier>());
+    builder.Services.AddHostedService<TelegramBot>();
+    builder.Services.AddHostedService<ReminderWorker>();
+}
+else
+{
+    builder.Services.AddSingleton<IStaffNotifier>(NullStaffNotifier.Instance);
+}
+
 // Each chat message costs a Claude call: cap it per client IP.
 builder.Services.AddRateLimiter(o =>
 {
@@ -62,6 +84,7 @@ using (var scope = app.Services.CreateScope())
     await SeedData.EnsureSeededAsync(db);
     app.Logger.LogInformation("Database ready at {Path}", dbPath);
     if (string.IsNullOrWhiteSpace(claudeKey)) app.Logger.LogWarning("Claude:ApiKey not set: AI chat is disabled");
+    if (string.IsNullOrWhiteSpace(telegramToken)) app.Logger.LogWarning("Telegram:BotToken not set: Telegram bot, staff notifications and reminders are off");
 }
 
 app.UseSerilogRequestLogging();

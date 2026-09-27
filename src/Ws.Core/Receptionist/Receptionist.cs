@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Ws.Core.Data;
 using Ws.Core.Domain;
+using Ws.Core.Notifications;
 
 namespace Ws.Core.Receptionist;
 
@@ -22,8 +23,10 @@ public sealed class Receptionist(
     ReceptionistTools tools,
     TimeProvider clock,
     IOptions<ReceptionistOptions> options,
-    ILogger<Receptionist> log)
+    ILogger<Receptionist> log,
+    IStaffNotifier? notifier = null)
 {
+    private readonly IStaffNotifier _notifier = notifier ?? NullStaffNotifier.Instance;
     private readonly ReceptionistOptions _opt = options.Value;
 
     private static readonly List<BetaToolUnion> ToolDefinitions = ReceptionistTools.Specs
@@ -52,6 +55,7 @@ public sealed class Receptionist(
             db.Conversations.Add(conversation);
         }
         if (language != null) conversation.Language = Languages.Normalize(language);
+        var wasNeedsHuman = conversation.NeedsHuman;
 
         userText = userText.Trim();
         if (userText.Length > _opt.MaxUserMessageLength) userText = userText[.._opt.MaxUserMessageLength];
@@ -69,7 +73,7 @@ public sealed class Receptionist(
                 : "This chat has gotten long, so I'm passing it to our team; they'll reply soon.";
             turn.Add(Plain(MessageRole.User, userText, now));
             turn.Add(Plain(MessageRole.Assistant, text, now));
-            await SaveAsync(conversation, turn, now, ct);
+            await SaveAsync(conversation, turn, now, wasNeedsHuman, ct);
             return new ReceptionistReply(conversation.Id, text, true);
         }
 
@@ -156,7 +160,7 @@ public sealed class Receptionist(
             });
         }
 
-        await SaveAsync(conversation, turn, now, ct);
+        await SaveAsync(conversation, turn, now, wasNeedsHuman, ct);
         // Text written between tool calls ("let me check...") is part of the reply the client sees.
         var shown = string.Join("\n\n", turn.Where(m => m.Role == MessageRole.Assistant && m.Text.Length > 0).Select(m => m.Text));
         return new ReceptionistReply(conversation.Id, shown.Length > 0 ? shown : replyText, conversation.NeedsHuman);
@@ -188,11 +192,30 @@ public sealed class Receptionist(
         Content = StoredBlock.Deserialize(m.ContentJson!).Select(b => b.ToParam()).ToList(),
     };
 
-    private async Task SaveAsync(Conversation conversation, List<ConversationMessage> turn, DateTime now, CancellationToken ct)
+    private async Task SaveAsync(
+        Conversation conversation, List<ConversationMessage> turn, DateTime now, bool wasNeedsHuman, CancellationToken ct)
     {
         conversation.Messages.AddRange(turn);
         conversation.LastMessageAtUtc = now;
         await db.SaveChangesAsync(ct);
+
+        // Newly handed off to a human: tell the team once (not on every later message).
+        if (conversation.NeedsHuman && !wasNeedsHuman) await NotifyHandoffAsync(conversation, ct);
+    }
+
+    private async Task NotifyHandoffAsync(Conversation conversation, CancellationToken ct)
+    {
+        var client = conversation.ClientId == null
+            ? null
+            : await db.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == conversation.ClientId, ct);
+        var lastMessages = conversation.Messages
+            .Where(m => m.Role == MessageRole.User && m.Text.Length > 0)
+            .TakeLast(3)
+            .Select(m => m.Text)
+            .ToList();
+        _notifier.HandoffRequested(new HandoffNotice(
+            conversation.Id, conversation.Channel, conversation.ExternalId, client?.Name, client?.Phone,
+            conversation.HandoffReason, lastMessages));
     }
 
     private static ConversationMessage Plain(MessageRole role, string text, DateTime now) => new()

@@ -24,6 +24,11 @@ public static class Languages
     public const string English = "en";
     public const string Russian = "ru";
 
+    /// <summary>"ru", "ru-RU" and also Belarusian/Ukrainian speakers (common in Minsk) get Russian; everyone else English.</summary>
     public static string Normalize(string? language) =>
-        language != null && language.StartsWith(Russian, StringComparison.OrdinalIgnoreCase) ? Russian : English;
+        language != null && (language.StartsWith(Russian, StringComparison.OrdinalIgnoreCase)
+                             || language.StartsWith("be", StringComparison.OrdinalIgnoreCase)
+                             || language.StartsWith("uk", StringComparison.OrdinalIgnoreCase))
+            ? Russian
+            : English;
 }

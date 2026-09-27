@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ws.Core\Ws.Core.csproj" />
+    <ProjectReference Include="..\Ws.Api\Ws.Api.csproj" />
   </ItemGroup>
 
 </Project>
