@@ -522,3 +522,20 @@
     display: none;
   }
 }
+
+/* Moving a booking */
+.admin-move {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-move h3 {
+  margin: 0;
+}
+
+.admin-move-artist {
+  display: grid;
+  gap: 6px;
+}

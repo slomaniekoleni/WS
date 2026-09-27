@@ -34,6 +34,7 @@ Website + AI receptionist for a tattoo & piercing salon: answers client question
 - No online deposits/payments for now: booking only.
 - Own calendar, no Google sync. One shared room: artists normally work side by side, but an intimate procedure takes the whole room (modeled as `Room.Workstations` + `Service.NeedsPrivateRoom`).
 - Every client booking starts **Pending** and needs the artist's approval (holds the slot meanwhile). Staff-created bookings are confirmed immediately.
+- Rescheduling (2026-09-27): staff (admin calendar "Move", any free slot, any artist who does the service, status kept, Telegram client told), clients via the AI (`get_reschedule_options` / `reschedule_booking`, phone must match) and via Telegram buttons under the confirmation message (`Telegram/RescheduleFlow.cs`, stateless callback data `rs*`). A client move sends the booking back to **Pending** (staff group gets a "Перенос" request with approve/decline, old time freed) and is allowed only up to `Salon.ClientChangeNoticeHours` (24) before the appointment. `BookingService.RescheduleAsync` / `GetRescheduleSlotsAsync`; a moved booking keeps its booked length with the same artist.
 - Staff notifications + approvals: Telegram staff group.
 - Hosting: Docker. Demo runs on the owner's PC behind a Cloudflare Tunnel (decided 2026-09-27); a VPS later.
 - Minsk (`Europe/Minsk`, UTC+3, no DST), prices in BYN, room has 2 workstations.

@@ -147,6 +147,14 @@ public sealed class TelegramBot(
 
     private async Task HandleCallbackAsync(CallbackQuery cb, CancellationToken ct)
     {
+        // Clients moving their own booking (buttons in their private chat).
+        if (cb.Data != null && RescheduleFlow.Handles(cb.Data) && cb.Message?.Chat.Type == "private")
+        {
+            using var clientScope = scopes.CreateScope();
+            await clientScope.ServiceProvider.GetRequiredService<RescheduleFlow>().HandleAsync(cb, ct);
+            return;
+        }
+
         if (cb.Message == null || cb.Message.Chat.Id != _opt.StaffChatId || cb.Data == null)
         {
             await api.AnswerCallbackQueryAsync(cb.Id, ct: ct);

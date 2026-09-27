@@ -71,6 +71,7 @@ if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddSingleton<IStaffNotifier>(sp => sp.GetRequiredService<TelegramStaffNotifier>());
     builder.Services.AddHostedService(sp => sp.GetRequiredService<TelegramStaffNotifier>());
     builder.Services.AddHostedService<TelegramBot>();
+    builder.Services.AddScoped<RescheduleFlow>();
     builder.Services.AddHostedService<ReminderWorker>();
 }
 else

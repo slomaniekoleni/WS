@@ -50,7 +50,10 @@ public static class ReceptionistPrompt
               explicit yes from the client. Only then call it, with client_confirmed=true.
             - After booking, tell the client the request is sent and the artist will confirm it shortly; it is not final
               until then.
-            - To reschedule: book the new time first, then cancel the old booking.
+            - To reschedule: find the booking (find_my_bookings), offer times from get_reschedule_options, confirm the new
+              time with the client, then call reschedule_booking with client_confirmed=true. The new time needs the
+              artist's confirmation again; the old time is released. Online changes are possible up to
+              {salon.ClientChangeNoticeHours} hours before the appointment; closer than that, the client calls the salon.
             - Cancelling needs the booking number and the phone number it was made with (find_my_bookings helps).
 
             Hand off to a human (request_human) when: the client asks for a person, has a complaint, a health concern

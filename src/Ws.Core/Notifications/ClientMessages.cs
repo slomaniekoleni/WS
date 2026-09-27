@@ -18,6 +18,49 @@ public static class ClientMessages
         ? $"Ваша запись отменена:\n{Summary(b, salon)}\nЕсли это неожиданно или хотите другое время, напишите сюда."
         : $"Your booking was cancelled:\n{Summary(b, salon)}\nIf that's unexpected or you'd like another time, write here.";
 
+    /// <summary>Staff moved the booking.</summary>
+    public static string Moved(Booking b, Salon salon) => Ru(b)
+        ? $"Ваша запись перенесена 🔁\n{Summary(b, salon)}\nАдрес: {salon.Address.Ru}\nЕсли новое время не подходит, напишите сюда."
+        : $"Your booking was moved 🔁\n{Summary(b, salon)}\nAddress: {salon.Address.En}\nIf the new time doesn't suit you, write here.";
+
+    /// <summary>The client moved the booking; the artist still has to confirm the new time.</summary>
+    public static string RescheduleRequested(Booking b, Salon salon) => Ru(b)
+        ? $"Запрос на перенос отправлен 🔁\n{Summary(b, salon)}\nМастер подтвердит новое время, я сообщу."
+        : $"Reschedule request sent 🔁\n{Summary(b, salon)}\nThe artist will confirm the new time, I'll let you know.";
+
+    // Reschedule picker (Telegram buttons). Language = the client's booking language.
+    public static string RescheduleButton(string language) => IsRu(language) ? "🔁 Перенести" : "🔁 Reschedule";
+    public static string RescheduleYes(string language) => IsRu(language) ? "✅ Да, перенести" : "✅ Yes, move it";
+    public static string RescheduleBack(string language) => IsRu(language) ? "‹ Назад" : "‹ Back";
+    public static string RescheduleLater(string language) => IsRu(language) ? "Позже ›" : "Later ›";
+
+    public static string ReschedulePickDay(Booking b, Salon salon) => Ru(b)
+        ? $"Перенос записи:\n{Summary(b, salon)}\n\nВыберите новый день:"
+        : $"Moving your booking:\n{Summary(b, salon)}\n\nPick a new day:";
+
+    public static string ReschedulePickTime(string language, string day) =>
+        IsRu(language) ? $"Свободное время на {day}:" : $"Free times on {day}:";
+
+    public static string RescheduleConfirm(string language, string when) => IsRu(language)
+        ? $"Перенести запись на {when}?\nМастер подтвердит новое время."
+        : $"Move your booking to {when}?\nThe artist will confirm the new time.";
+
+    public static string RescheduleNoSlots(string language) => IsRu(language)
+        ? "В эти дни свободного времени нет. Нажмите «Позже ›» или напишите, и я подберу вариант."
+        : "No free times on these days. Tap \"Later ›\" or write to me and I'll find an option.";
+
+    public static string RescheduleSlotGone(string language) => IsRu(language)
+        ? "Это время только что заняли. Выберите другое:"
+        : "That time was just taken. Please pick another:";
+
+    public static string RescheduleTooLate(string language, int hours, string phone) => IsRu(language)
+        ? $"Перенести запись самостоятельно можно не позже чем за {hours} ч. Позвоните нам: {phone}."
+        : $"Bookings can be moved online up to {hours} h before. Please call us: {phone}.";
+
+    public static string RescheduleNotActive(string language) => IsRu(language)
+        ? "Эта запись уже неактуальна."
+        : "This booking is no longer active.";
+
     public static string Reminder(Booking b, Salon salon, ReminderKind kind) => (Ru(b), kind) switch
     {
         (true, ReminderKind.DayBefore) =>
@@ -46,7 +89,8 @@ public static class ClientMessages
         ? "Не получилось ответить. Попробуйте ещё раз чуть позже."
         : "I couldn't answer just now. Please try again a bit later.";
 
-    private static bool Ru(Booking b) => Languages.Normalize(b.Client.Language) == Languages.Russian;
+    private static bool Ru(Booking b) => IsRu(b.Client.Language);
+    private static bool IsRu(string language) => Languages.Normalize(language) == Languages.Russian;
 
     private static string Summary(Booking b, Salon salon)
     {

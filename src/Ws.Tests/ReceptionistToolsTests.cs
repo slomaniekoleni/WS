@@ -104,6 +104,29 @@ public sealed class ReceptionistToolsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reschedule_needs_the_matching_phone_and_confirmation()
+    {
+        await Run("create_booking", Booking());
+        var id = (await _db.Bookings.SingleAsync()).Id;
+
+        var wrongPhone = await Run("get_reschedule_options", new { booking_id = id, phone = "+375 29 999-99-99", date_from = "2026-10-05" });
+        Assert.True(wrongPhone.IsError);
+
+        var options = await Run("get_reschedule_options", new { booking_id = id, phone = "80291111111", date_from = "2026-10-05" });
+        Assert.False(options.IsError, options.Content);
+        Assert.Contains("15:00", options.Content); // its own time counts as free
+
+        var unconfirmed = await Run("reschedule_booking", new { booking_id = id, phone = "80291111111", new_start = "2026-10-05 17:00", client_confirmed = false });
+        Assert.True(unconfirmed.IsError);
+
+        var ok = await Run("reschedule_booking", new { booking_id = id, phone = "80291111111", new_start = "2026-10-05 17:00", client_confirmed = true });
+        Assert.False(ok.IsError, ok.Content);
+        var booking = await _db.Bookings.AsNoTracking().SingleAsync();
+        Assert.Equal(new DateTime(2026, 10, 5, 14, 0, 0, DateTimeKind.Utc), booking.StartUtc); // 17:00 Minsk
+        Assert.Equal(BookingStatus.Pending, booking.Status);
+    }
+
+    [Fact]
     public async Task Request_human_flags_the_conversation()
     {
         await Run("request_human", new { reason = "complaint about healing" });

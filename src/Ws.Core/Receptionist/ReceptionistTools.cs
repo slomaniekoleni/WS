@@ -66,6 +66,29 @@ public sealed class ReceptionistTools(WsDbContext db, BookingService bookings, T
                 ["reason"] = new { type = "string" },
             },
             ["booking_id", "phone"]),
+        new("get_reschedule_options",
+            "Free times an existing booking could move to (its own time counts as free). The phone must match the booking. Max 7 days.",
+            new()
+            {
+                ["booking_id"] = new { type = "integer" },
+                ["phone"] = new { type = "string" },
+                ["date_from"] = new { type = "string", description = "yyyy-MM-dd, salon-local." },
+                ["date_to"] = new { type = "string", description = "yyyy-MM-dd, inclusive. Defaults to date_from." },
+                ["artist_id"] = new { type = "integer", description = "Optional: only this artist (default: every artist who does the service)." },
+            },
+            ["booking_id", "phone", "date_from"]),
+        new("reschedule_booking",
+            "Moves a booking to a new time (optionally another artist). It goes back to pending until the artist confirms. "
+            + "Only after the client explicitly confirmed the new time.",
+            new()
+            {
+                ["booking_id"] = new { type = "integer" },
+                ["phone"] = new { type = "string" },
+                ["new_start"] = new { type = "string", description = "Salon-local start, yyyy-MM-dd HH:mm, from get_reschedule_options." },
+                ["artist_id"] = new { type = "integer", description = "Optional: move to this artist. Default: same artist." },
+                ["client_confirmed"] = new { type = "boolean", description = "True only if the client said yes to the new time." },
+            },
+            ["booking_id", "phone", "new_start", "client_confirmed"]),
         new("request_human",
             "Flags this conversation for the salon team to take over (complaints, health concerns, quotes, anything unclear).",
             new() { ["reason"] = new { type = "string", description = "Short summary for the team." } },
@@ -83,6 +106,8 @@ public sealed class ReceptionistTools(WsDbContext db, BookingService bookings, T
                 "create_booking" => await CreateBookingAsync(input, conversation, ct),
                 "find_my_bookings" => await FindBookingsAsync(input, conversation, ct),
                 "cancel_booking" => await CancelAsync(input, conversation, ct),
+                "get_reschedule_options" => await RescheduleOptionsAsync(input, conversation, ct),
+                "reschedule_booking" => await RescheduleAsync(input, conversation, ct),
                 "request_human" => await RequestHumanAsync(input, conversation, ct),
                 _ => ToolOutcome.Error($"Unknown tool {name}."),
             };
@@ -215,18 +240,97 @@ public sealed class ReceptionistTools(WsDbContext db, BookingService bookings, T
 
     private async Task<ToolOutcome> CancelAsync(IReadOnlyDictionary<string, JsonElement> input, Conversation c, CancellationToken ct)
     {
-        var salon = await db.Salons.AsNoTracking().SingleAsync(s => s.Id == c.SalonId, ct);
-        var phone = PhoneFormat.Normalize(Str(input, "phone"), salon.Country);
         var bookingId = Int(input, "booking_id");
-        var owner = await db.Bookings.AsNoTracking()
-            .Where(b => b.Id == bookingId && b.SalonId == c.SalonId).Select(b => b.Client.Phone).FirstOrDefaultAsync(ct);
-        // Same answer for "no such booking" and "wrong phone", so bookings can't be probed.
-        if (phone == null || owner != phone) return ToolOutcome.Error("No booking with this number and phone.");
+        if (!await OwnsBookingAsync(input, c, bookingId, ct)) return ToolOutcome.Error(NoSuchBooking);
 
         var result = await bookings.CancelAsync(bookingId, OptionalStr(input, "reason") ?? "Cancelled by client via chat", ct);
         return result.Ok
             ? ToolOutcome.Json(new { booking_id = bookingId, status = "cancelled" })
             : ToolOutcome.Error("This booking can't be cancelled (already cancelled or finished).");
+    }
+
+    private async Task<ToolOutcome> RescheduleOptionsAsync(IReadOnlyDictionary<string, JsonElement> input, Conversation c, CancellationToken ct)
+    {
+        var bookingId = Int(input, "booking_id");
+        if (!await OwnsBookingAsync(input, c, bookingId, ct)) return ToolOutcome.Error(NoSuchBooking);
+
+        var salon = await db.Salons.AsNoTracking().SingleAsync(s => s.Id == c.SalonId, ct);
+        var booking = await db.Bookings.AsNoTracking().SingleAsync(b => b.Id == bookingId, ct);
+        if (!bookings.ClientCanChange(booking, salon)) return ToolOutcome.Error(TooLate(salon));
+
+        var from = Date(input, "date_from");
+        var to = input.ContainsKey("date_to") ? Date(input, "date_to") : from;
+        if (to < from) (from, to) = (to, from);
+        if (to.DayNumber - from.DayNumber > 6) to = from.AddDays(6);
+
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(salon.TimeZoneId);
+        var result = await bookings.GetRescheduleSlotsAsync(bookingId, OptionalInt(input, "artist_id"), from, to, ct: ct);
+        return ToolOutcome.Json(result.Select(a => new
+        {
+            artist_id = a.ArtistId,
+            artist = a.ArtistName,
+            days = a.SlotsUtc
+                .Select(s => TimeZoneInfo.ConvertTimeFromUtc(s, zone))
+                .GroupBy(l => l.ToString("yyyy-MM-dd (dddd)", CultureInfo.InvariantCulture))
+                .ToDictionary(g => g.Key, g => string.Join(" ", g.Select(l => l.ToString("HH:mm", CultureInfo.InvariantCulture)))),
+        }));
+    }
+
+    private async Task<ToolOutcome> RescheduleAsync(IReadOnlyDictionary<string, JsonElement> input, Conversation c, CancellationToken ct)
+    {
+        if (!input.TryGetValue("client_confirmed", out var confirmed) || confirmed.ValueKind != JsonValueKind.True)
+            return ToolOutcome.Error("Tell the client the new time and get an explicit yes first.");
+
+        var bookingId = Int(input, "booking_id");
+        if (!await OwnsBookingAsync(input, c, bookingId, ct)) return ToolOutcome.Error(NoSuchBooking);
+
+        var salon = await db.Salons.AsNoTracking().SingleAsync(s => s.Id == c.SalonId, ct);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(salon.TimeZoneId);
+        if (!DateTime.TryParseExact(Str(input, "new_start"), LocalFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var local))
+            throw new ToolInputException("new_start must be yyyy-MM-dd HH:mm.");
+
+        var result = await bookings.RescheduleAsync(bookingId, TimeZoneInfo.ConvertTimeToUtc(local, zone),
+            OptionalInt(input, "artist_id"), staff: false, ct);
+        if (!result.Ok)
+        {
+            return ToolOutcome.Error(result.Error switch
+            {
+                BookingError.TooLateToChange => TooLate(salon),
+                BookingError.SlotTaken => "That time is not available. Check get_reschedule_options again.",
+                BookingError.ArtistDoesNotDoService => "This artist doesn't do this service.",
+                BookingError.InvalidState => "This booking is no longer active (cancelled, declined or finished).",
+                _ => $"Reschedule failed: {result.Error}.",
+            });
+        }
+
+        var b = result.Booking!;
+        return ToolOutcome.Json(new
+        {
+            booking_id = b.Id,
+            status = "pending_artist_confirmation",
+            service = b.Service.Name.En,
+            artist = b.Artist.Name,
+            start = TimeZoneInfo.ConvertTimeFromUtc(b.StartUtc, zone).ToString(LocalFormat, CultureInfo.InvariantCulture),
+        });
+    }
+
+    private const string NoSuchBooking = "No booking with this number and phone.";
+
+    private static string TooLate(Salon salon) =>
+        $"Too close to the appointment to change it online (less than {salon.ClientChangeNoticeHours} h). "
+        + $"The client should call the salon: {salon.Phone}.";
+
+    /// <summary>
+    /// The phone must be the one the booking was made with. Same answer for "no such booking" and "wrong phone",
+    /// so bookings can't be probed.
+    /// </summary>
+    private async Task<bool> OwnsBookingAsync(IReadOnlyDictionary<string, JsonElement> input, Conversation c, int bookingId, CancellationToken ct)
+    {
+        var country = await db.Salons.Where(s => s.Id == c.SalonId).Select(s => s.Country).SingleAsync(ct);
+        var phone = PhoneFormat.Normalize(Str(input, "phone"), country);
+        var owner = await db.Bookings.AsNoTracking()
+            .Where(b => b.Id == bookingId && b.SalonId == c.SalonId).Select(b => b.Client.Phone).FirstOrDefaultAsync(ct);
+        return phone != null && owner == phone;
     }
 
     private async Task<ToolOutcome> RequestHumanAsync(IReadOnlyDictionary<string, JsonElement> input, Conversation c, CancellationToken ct)

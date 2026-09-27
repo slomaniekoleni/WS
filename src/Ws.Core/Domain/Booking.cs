@@ -59,6 +59,8 @@ public sealed class Booking
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? DecidedAtUtc { get; set; }
+    /// <summary>Set when the client moved the booking: the time it was at before (shown to staff with the approval request).</summary>
+    public DateTime? RescheduledFromUtc { get; set; }
     public string? DeclineOrCancelReason { get; set; }
     public DateTime? Reminder24hSentAtUtc { get; set; }
     public DateTime? Reminder2hSentAtUtc { get; set; }

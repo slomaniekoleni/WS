@@ -55,6 +55,20 @@ public sealed class AdminBookingsController(WsDbContext db, BookingService booki
         return AdminBookingDto.From(result.Booking!);
     }
 
+    /// <summary>Staff moves a booking (new time, optionally another artist). Status stays; clients on a messenger are told.</summary>
+    [HttpPost("{id:int}/move")]
+    public async Task<ActionResult<AdminBookingDto>> Move(int id, MoveRequest req, CancellationToken ct)
+    {
+        var salonId = SalonId;
+        if (!await db.Bookings.AnyAsync(b => b.Id == id && b.SalonId == salonId, ct)) return NotFound();
+
+        var result = await bookings.RescheduleAsync(id, req.StartUtc.ToUniversalTime(), req.ArtistId, staff: true, ct);
+        if (!result.Ok) return BookingProblem(result.Error);
+
+        await notifier.BookingMovedAsync(result.Booking!, ct);
+        return AdminBookingDto.From(result.Booking!);
+    }
+
     /// <summary>decision: approve | decline | cancel | complete | no-show. Clients on a messenger are told.</summary>
     [HttpPost("{id:int}/{decision}")] // not {action}: MVC reserves that route value
     public async Task<ActionResult<AdminBookingDto>> Decide(int id, string decision, DecisionRequest? body, CancellationToken ct)
@@ -96,13 +110,13 @@ public sealed record AdminBookingDto(
     int Id, BookingStatus Status, DateTime StartUtc, DateTime EndUtc, int ArtistId, string ArtistName,
     int ServiceId, string ServiceName, int ClientId, string ClientName, string? Phone, string? Email, long? TelegramUserId,
     Channel Source, bool WithGuardian, bool NeedsPrivateRoom, TattooDetails? Tattoo, string? ClientNotes, string? StaffNotes,
-    DateTime CreatedAtUtc, string? DeclineOrCancelReason)
+    DateTime CreatedAtUtc, string? DeclineOrCancelReason, DateTime? RescheduledFromUtc)
 {
     /// <summary>Booking with Artist, Service and Client loaded. Service name in Russian (staff language).</summary>
     public static AdminBookingDto From(Booking b) => new(
         b.Id, b.Status, b.StartUtc, b.EndUtc, b.ArtistId, b.Artist.Name, b.ServiceId, b.Service.Name.Get(Languages.Russian),
         b.ClientId, b.Client.Name, b.Client.Phone, b.Client.Email, b.Client.TelegramUserId, b.Source, b.WithGuardian,
-        b.NeedsPrivateRoom, b.Tattoo, b.ClientNotes, b.StaffNotes, b.CreatedAtUtc, b.DeclineOrCancelReason);
+        b.NeedsPrivateRoom, b.Tattoo, b.ClientNotes, b.StaffNotes, b.CreatedAtUtc, b.DeclineOrCancelReason, b.RescheduledFromUtc);
 }
 
 public sealed record StaffBookingRequest(
@@ -110,5 +124,7 @@ public sealed record StaffBookingRequest(
     AgeGroup AgeGroup, string? Notes, TattooDetails? Tattoo);
 
 public sealed record DecisionRequest(string? Reason);
+
+public sealed record MoveRequest(DateTime StartUtc, int? ArtistId);
 
 public sealed record NotesRequest(string? StaffNotes);

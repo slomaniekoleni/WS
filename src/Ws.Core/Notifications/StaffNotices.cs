@@ -34,7 +34,9 @@ public sealed record BookingNotice(
     Channel Source,
     bool WithGuardian,
     TattooDetails? Tattoo,
-    string? Notes)
+    string? Notes,
+    /// <summary>The client moved the booking from this time (null for a new request).</summary>
+    DateTime? RescheduledFromLocal = null)
 {
     /// <summary>Builds a notice from a booking with Service, Artist and Client loaded. Service name in Russian (staff language).</summary>
     public static BookingNotice From(Booking b, TimeZoneInfo zone) => new(
@@ -51,7 +53,8 @@ public sealed record BookingNotice(
         b.Source,
         b.WithGuardian,
         b.Tattoo,
-        b.ClientNotes);
+        b.ClientNotes,
+        b.RescheduledFromUtc is { } from ? TimeZoneInfo.ConvertTimeFromUtc(from, zone) : null);
 }
 
 public sealed record HandoffNotice(

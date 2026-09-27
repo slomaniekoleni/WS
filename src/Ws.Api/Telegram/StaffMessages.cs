@@ -29,10 +29,13 @@ public static class StaffMessages
     public static string BookingRequest(BookingNotice n)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"🆕 <b>Заявка #{n.BookingId}</b> · {E(n.ServiceName)}");
+        sb.AppendLine(n.RescheduledFromLocal == null
+            ? $"🆕 <b>Заявка #{n.BookingId}</b> · {E(n.ServiceName)}"
+            : $"🔁 <b>Перенос записи #{n.BookingId}</b> · {E(n.ServiceName)}");
         var artist = n.ArtistTelegramUsername != null ? $"{E(n.ArtistName)} @{E(n.ArtistTelegramUsername)}" : E(n.ArtistName);
         sb.AppendLine($"Мастер: {artist}");
-        sb.AppendLine($"Когда: {E(n.StartLocal.ToString("ddd, d MMMM, HH:mm", Ru))} ({n.DurationMinutes} мин)");
+        if (n.RescheduledFromLocal is { } was) sb.AppendLine($"Было: <s>{E(was.ToString("ddd, d MMMM, HH:mm", Ru))}</s>");
+        sb.AppendLine($"{(n.RescheduledFromLocal == null ? "Когда" : "Стало")}: {E(n.StartLocal.ToString("ddd, d MMMM, HH:mm", Ru))} ({n.DurationMinutes} мин)");
         sb.AppendLine($"Клиент: {E(n.ClientName)}{Contact(n.ClientPhone, n.ClientTelegramUserId)}");
         sb.AppendLine($"Источник: {Source(n.Source)}");
         if (n.WithGuardian) sb.AppendLine("⚠️ 16–17 лет, придёт с родителем/представителем");

@@ -107,6 +107,16 @@ public sealed class AdminApiTests : IClassFixture<AdminApiTests.App>
 
         // Approving a confirmed booking is not allowed; completing it is.
         Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsync($"/api/admin/bookings/{id}/approve", null)).StatusCode);
+        // Staff move it to another free time: stays confirmed.
+        var moveSlots = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/admin/availability/move/{id}?artistId={artistId}&from={day.AddDays(1):yyyy-MM-dd}&to={day.AddDays(7):yyyy-MM-dd}", Json);
+        var newStart = moveSlots[0].GetProperty("slots")[0].GetString();
+        var moved = await client.PostAsJsonAsync($"/api/admin/bookings/{id}/move", new { startUtc = newStart });
+        Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+        var movedBooking = await moved.Content.ReadFromJsonAsync<JsonElement>(Json);
+        Assert.Equal("Confirmed", movedBooking.GetProperty("status").GetString());
+        Assert.Equal(DateTime.Parse(newStart!).ToUniversalTime(), movedBooking.GetProperty("startUtc").GetDateTime().ToUniversalTime());
+
         var done = await client.PostAsync($"/api/admin/bookings/{id}/complete", null);
         Assert.Equal("Completed", (await done.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("status").GetString());
     }

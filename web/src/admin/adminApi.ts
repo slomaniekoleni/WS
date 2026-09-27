@@ -35,6 +35,8 @@ export interface AdminBooking {
   staffNotes: string | null
   createdAtUtc: string
   declineOrCancelReason: string | null
+  /** Set when the client moved it: the time it was at before. */
+  rescheduledFromUtc: string | null
 }
 
 export interface Localized {
@@ -142,6 +144,9 @@ export const admin = {
   bookings: (from: string, to: string) => call<AdminBooking[]>(`/api/admin/bookings?from=${from}&to=${to}`),
   decide: (id: number, action: 'approve' | 'decline' | 'cancel' | 'complete' | 'no-show', reason?: string) =>
     post<AdminBooking>(`/api/admin/bookings/${id}/${action}`, { reason }),
+  /** Where a booking could move on a date: per artist who does its service (its own time counts as free). */
+  moveSlots: (id: number, date: string) => call<ArtistSlots[]>(`/api/admin/availability/move/${id}?from=${date}&to=${date}`),
+  move: (id: number, startUtc: string, artistId: number) => post<AdminBooking>(`/api/admin/bookings/${id}/move`, { startUtc, artistId }),
   saveNotes: (id: number, staffNotes: string) => put<void>(`/api/admin/bookings/${id}/notes`, { staffNotes }),
   availability: (serviceId: number, artistId: number, date: string) =>
     call<ArtistSlots[]>(`/api/admin/availability?serviceId=${serviceId}&artistId=${artistId}&from=${date}&to=${date}`),

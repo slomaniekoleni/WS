@@ -31,6 +31,8 @@ public sealed class Salon
     public int MinBookingLeadMinutes { get; set; } = 120;
     /// <summary>How far ahead slots are offered.</summary>
     public int MaxBookingDaysAhead { get; set; } = 60;
+    /// <summary>Clients can move (reschedule) a booking themselves up to this many hours before it; later they contact the salon.</summary>
+    public int ClientChangeNoticeHours { get; set; } = 24;
     /// <summary>Grid for offered start times.</summary>
     public int SlotStepMinutes { get; set; } = 30;
 

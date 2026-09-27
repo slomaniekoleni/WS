@@ -40,6 +40,8 @@ public enum BookingError
     InvalidPhone,
     SlotTaken,
     InvalidState,
+    /// <summary>Client tried to move a booking closer than Salon.ClientChangeNoticeHours to its start.</summary>
+    TooLateToChange,
 }
 
 public sealed record BookingResult(Booking? Booking, BookingError Error)
@@ -66,6 +68,29 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock, IStaffNot
         var salon = await db.Salons.Include(s => s.Rooms).FirstOrDefaultAsync(s => s.Id == salonId, ct);
         var service = await db.Services.FirstOrDefaultAsync(s => s.Id == serviceId && s.SalonId == salonId && s.IsActive, ct);
         if (salon == null || service == null || (!service.BookableOnline && !staff)) return [];
+        return await FindSlotsAsync(salon, service, artistId, from, to, staff, moving: null, ct);
+    }
+
+    /// <summary>
+    /// Where an existing booking could move to: its own time doesn't count as busy. Works for any service
+    /// (a tattoo session booked by staff can be moved too). artistId null = every artist who does the service.
+    /// </summary>
+    public async Task<IReadOnlyList<ArtistSlots>> GetRescheduleSlotsAsync(
+        int bookingId, int? artistId, DateOnly from, DateOnly to, bool staff = false, CancellationToken ct = default)
+    {
+        var booking = await db.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (booking == null || !Booking.ActiveStatuses.Contains(booking.Status)) return [];
+        var salon = await db.Salons.Include(s => s.Rooms).FirstAsync(s => s.Id == booking.SalonId, ct);
+        var service = await db.Services.FirstAsync(s => s.Id == booking.ServiceId, ct);
+        return await FindSlotsAsync(salon, service, artistId, from, to, staff, booking, ct);
+    }
+
+    private async Task<IReadOnlyList<ArtistSlots>> FindSlotsAsync(
+        Salon salon, Service service, int? artistId, DateOnly from, DateOnly to, bool staff, Booking? moving, CancellationToken ct)
+    {
+        var salonId = salon.Id;
+        var serviceId = service.Id;
+        var excludeBookingId = moving?.Id;
 
         var zone = TimeZoneInfo.FindSystemTimeZoneById(salon.TimeZoneId);
         var maxTo = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(Now, zone)).AddDays(salon.MaxBookingDaysAhead);
@@ -82,12 +107,13 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock, IStaffNot
         // Pad by a day each side so bookings crossing the local-date edges are seen.
         var windowStart = TimeZoneInfo.ConvertTimeToUtc(from.AddDays(-1).ToDateTime(TimeOnly.MinValue), zone);
         var windowEnd = TimeZoneInfo.ConvertTimeToUtc(to.AddDays(2).ToDateTime(TimeOnly.MinValue), zone);
-        var rooms = await LoadRoomsAsync(salon, windowStart, windowEnd, excludeBookingId: null, ct);
+        var rooms = await LoadRoomsAsync(salon, windowStart, windowEnd, excludeBookingId, ct);
 
         var result = new List<ArtistSlots>();
         foreach (var link in links)
         {
-            var query = await BuildQueryAsync(salon, zone, service, link, rooms, windowStart, windowEnd, null, staff, ct);
+            var query = await BuildQueryAsync(salon, zone, service, link, rooms, windowStart, windowEnd, excludeBookingId, staff, ct);
+            if (moving != null) query = KeepLength(query, moving, link.ArtistId);
             result.Add(new ArtistSlots(link.ArtistId, link.Artist.Name, SlotFinder.FindSlots(query, from, to)));
         }
         return result;
@@ -168,6 +194,88 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock, IStaffNot
             WriteLock.Release();
         }
     }
+
+    /// <summary>
+    /// Moves a booking to a new start (and optionally another artist who does the service).
+    /// Client moves: only up to Salon.ClientChangeNoticeHours before the current start, normal lead time and horizon,
+    /// and the booking goes back to Pending for the artist to approve (staff are notified). Staff moves keep the status.
+    /// Either way the old time is freed and reminders are sent again for the new time.
+    /// </summary>
+    public async Task<BookingResult> RescheduleAsync(
+        int bookingId, DateTime newStartUtc, int? newArtistId, bool staff, CancellationToken ct = default)
+    {
+        await WriteLock.WaitAsync(ct);
+        try
+        {
+            var booking = await db.Bookings
+                .Include(b => b.Artist).Include(b => b.Service).Include(b => b.Client)
+                .FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+            if (booking == null) return BookingResult.Fail(BookingError.NotFound);
+            if (!Booking.ActiveStatuses.Contains(booking.Status)) return new BookingResult(booking, BookingError.InvalidState);
+
+            var salon = await db.Salons.Include(s => s.Rooms).FirstAsync(s => s.Id == booking.SalonId, ct);
+            if (!staff && !ClientCanChange(booking, salon)) return new BookingResult(booking, BookingError.TooLateToChange);
+
+            var artistId = newArtistId ?? booking.ArtistId;
+            var startUtc = DateTime.SpecifyKind(newStartUtc, DateTimeKind.Utc);
+            if (startUtc == booking.StartUtc && artistId == booking.ArtistId) return new BookingResult(booking, BookingError.None);
+
+            var link = await db.ArtistServices
+                .Include(x => x.Artist).ThenInclude(a => a.WorkingHours)
+                .FirstOrDefaultAsync(x => x.ServiceId == booking.ServiceId && x.ArtistId == artistId && x.Artist.IsActive, ct);
+            if (link == null) return new BookingResult(booking, BookingError.ArtistDoesNotDoService);
+
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(salon.TimeZoneId);
+            var windowStart = startUtc.AddDays(-1);
+            var windowEnd = startUtc.AddDays(2);
+            var rooms = await LoadRoomsAsync(salon, windowStart, windowEnd, booking.Id, ct);
+            var query = await BuildQueryAsync(salon, zone, booking.Service, link, rooms, windowStart, windowEnd, booking.Id, staff, ct);
+            query = KeepLength(query, booking, link.ArtistId);
+            var roomId = SlotFinder.FindRoom(query, startUtc);
+            if (roomId == null) return new BookingResult(booking, BookingError.SlotTaken);
+
+            var previousStart = booking.StartUtc;
+            booking.ArtistId = link.ArtistId;
+            booking.Artist = link.Artist;
+            booking.RoomId = roomId.Value;
+            booking.StartUtc = startUtc;
+            booking.EndUtc = startUtc.AddMinutes(query.DurationMinutes);
+            booking.BlockedUntilUtc = booking.EndUtc.AddMinutes(query.BufferMinutes);
+            booking.Reminder24hSentAtUtc = null;
+            booking.Reminder2hSentAtUtc = null;
+            if (!staff)
+            {
+                // A new time is a new request: the artist approves it like any other.
+                booking.Status = BookingStatus.Pending;
+                booking.DecidedAtUtc = null;
+                booking.RescheduledFromUtc = previousStart;
+            }
+            await db.SaveChangesAsync(ct);
+
+            if (!staff) _notifier.BookingRequested(BookingNotice.From(booking, zone));
+            return new BookingResult(booking, BookingError.None);
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// A booking moved within the same artist keeps the length and buffer it was booked with, even if the service's
+    /// duration was edited since. With another artist it takes that artist's duration for the service.
+    /// </summary>
+    private static SlotQuery KeepLength(SlotQuery query, Booking booking, int artistId) =>
+        artistId != booking.ArtistId ? query : query with
+        {
+            DurationMinutes = (int)(booking.EndUtc - booking.StartUtc).TotalMinutes,
+            BufferMinutes = (int)(booking.BlockedUntilUtc - booking.EndUtc).TotalMinutes,
+        };
+
+    /// <summary>Whether the client may still move this booking themselves (not too close to its start).</summary>
+    public bool ClientCanChange(Booking booking, Salon salon) =>
+        Booking.ActiveStatuses.Contains(booking.Status) &&
+        booking.StartUtc - Now >= TimeSpan.FromHours(salon.ClientChangeNoticeHours);
 
     public Task<BookingResult> ApproveAsync(int bookingId, CancellationToken ct = default) =>
         DecideAsync(bookingId, [BookingStatus.Pending], BookingStatus.Confirmed, null, ct);

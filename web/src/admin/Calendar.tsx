@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { addDays, formatDateTime, formatDay, formatTime, salonDate } from '../format'
 import { useI18n } from '../i18n'
+import type { ArtistSlots } from '../api'
 import { admin, type AdminArtist, type AdminBooking, type AdminService } from './adminApi'
 import { useAdminT } from './adminI18n'
 import { Dialog, useErrorText } from './AdminApp'
@@ -169,6 +170,7 @@ function BookingDialog(props: {
   const [notes, setNotes] = useState(b.staffNotes ?? '')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [moving, setMoving] = useState(false)
 
   const act = async (action: 'approve' | 'decline' | 'cancel' | 'complete' | 'no-show') => {
     let reason: string | undefined
@@ -210,6 +212,7 @@ function BookingDialog(props: {
   return (
     <Dialog title={`#${b.id} · ${t(`status.${b.status}`)}`} onClose={props.onClose}>
       {row(t('b.when'), formatDateTime(b.startUtc, timeZone, locale) + '–' + formatTime(b.endUtc, timeZone, locale))}
+      {b.status === 'Pending' && b.rescheduledFromUtc && row(t('b.movedFrom'), formatDateTime(b.rescheduledFromUtc, timeZone, locale))}
       {row(t('b.service'), b.serviceName)}
       {row(t('b.artist'), b.artistName)}
       {row(t('b.client'), [b.clientName, b.phone, b.email].filter(Boolean).join(' · '))}
@@ -263,12 +266,113 @@ function BookingDialog(props: {
           </>
         )}
         {(b.status === 'Pending' || b.status === 'Confirmed') && (
+          <button className="btn btn-small btn-ghost" onClick={() => setMoving(!moving)} disabled={busy}>
+            {t('act.move')}
+          </button>
+        )}
+        {(b.status === 'Pending' || b.status === 'Confirmed') && (
           <button className="link danger" onClick={() => act('cancel')} disabled={busy}>
             {t('act.cancel')}
           </button>
         )}
       </div>
+
+      {moving && (
+        <MovePanel
+          booking={b}
+          timeZone={timeZone}
+          onMoved={(moved) => {
+            setMoving(false)
+            props.onUpdated(moved)
+          }}
+        />
+      )}
     </Dialog>
+  )
+}
+
+/** Staff moves a booking: pick a day, then a free time with any artist who does the service. */
+function MovePanel(props: { booking: AdminBooking; timeZone: string; onMoved: (b: AdminBooking) => void }) {
+  const { booking: b, timeZone } = props
+  const t = useAdminT()
+  const { locale } = useI18n()
+  const errorText = useErrorText()
+  const [date, setDate] = useState(() => salonDate(new Date(b.startUtc), timeZone))
+  const [options, setOptions] = useState<ArtistSlots[] | null>(null)
+  const [pick, setPick] = useState<{ artistId: number; artistName: string; start: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    admin
+      .moveSlots(b.id, date)
+      // The booking's own artist first.
+      .then((r) => !cancelled && setOptions([...r].sort((x, y) => Number(y.artistId === b.artistId) - Number(x.artistId === b.artistId))))
+      .catch(() => !cancelled && setOptions([]))
+    return () => {
+      cancelled = true
+    }
+  }, [b.id, b.artistId, date])
+
+  const move = async () => {
+    if (!pick) return
+    setBusy(true)
+    setError(null)
+    try {
+      props.onMoved(await admin.move(b.id, pick.start, pick.artistId))
+    } catch (err) {
+      setError(errorText(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const withSlots = options?.filter((o) => o.slots.length > 0) ?? []
+  return (
+    <section className="admin-move">
+      <h3>{t('mv.title')}</h3>
+      <p className="muted small">{t('mv.hint')}</p>
+      <label className="admin-notes">
+        {t('nb.date')}
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => {
+            setDate(e.target.value)
+            setOptions(null)
+            setPick(null)
+          }}
+        />
+      </label>
+      {options && withSlots.length === 0 && <p className="muted">{t('nb.noSlots')}</p>}
+      {withSlots.map((o) => (
+        <div key={o.artistId} className="admin-move-artist">
+          <strong className="small">
+            {o.artistName}
+            {o.artistId === b.artistId && <span className="muted"> · {t('mv.current')}</span>}
+          </strong>
+          <div className="times">
+            {o.slots.map((s) => (
+              <button
+                type="button"
+                key={s}
+                className={`chip ${pick?.start === s && pick.artistId === o.artistId ? 'active' : ''}`}
+                onClick={() => setPick({ artistId: o.artistId, artistName: o.artistName, start: s })}
+              >
+                {formatTime(s, timeZone, locale)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {error && <p className="notice">{error}</p>}
+      {pick && (
+        <button className="btn btn-small" onClick={move} disabled={busy}>
+          {t('mv.do', { when: formatDateTime(pick.start, timeZone, locale), artist: pick.artistName })}
+        </button>
+      )}
+    </section>
   )
 }
 
