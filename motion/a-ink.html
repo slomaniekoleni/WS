@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A · Ink &amp; Ensō — Wise City</title>
+<link rel="icon" href="favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Noto+Serif+JP:wght@700&display=swap&subset=cyrillic" rel="stylesheet" />
+<style>
+  :root {
+    --moss: #2f3a2c;
+    --moss-deep: #232b21;
+    --paper: #ece4d4;
+    --paper-2: #e3d8c3;
+    --ink: #1c1a17;
+    --oxblood: #8e1b24;
+    --tatami: #c9b98f;
+    --muted: #6d6556;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 300 17px/1.6 Manrope, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  /* Paper grain over everything */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.22;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+  a { color: inherit; }
+
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px clamp(16px, 4vw, 56px);
+    color: var(--paper);
+    mix-blend-mode: difference;
+    font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .nav nav { display: flex; gap: 28px; }
+  .nav a { text-decoration: none; }
+  .nav .book { border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+  @media (max-width: 640px) { .nav nav a:not(.book) { display: none; } }
+
+  /* HERO: the logo's own ensō is painted in by a rotating brush mask */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    background: radial-gradient(120% 90% at 70% 40%, #3a4736 0%, var(--moss) 45%, var(--moss-deep) 100%);
+    color: var(--paper);
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 4vw;
+    padding: 120px clamp(16px, 6vw, 96px) 80px;
+    overflow: hidden;
+  }
+  @media (max-width: 860px) { .hero { grid-template-columns: 1fr; text-align: left; padding-top: 110px; } }
+
+  @property --sweep { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .seal-wrap { position: relative; justify-self: center; width: min(520px, 100%, 80vw); aspect-ratio: 1; }
+  .seal-disc {
+    position: absolute; inset: 4%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 45% 40%, #f4eee2, #e2d6bf 70%, #cdbd9d);
+    box-shadow: 0 40px 80px rgb(0 0 0 / .35), inset 0 0 40px rgb(120 90 40 / .18);
+    transform: scale(.6); opacity: 0;
+    animation: disc 1.1s cubic-bezier(.2,.8,.2,1) .1s forwards;
+  }
+  @keyframes disc { to { transform: scale(1); opacity: 1; } }
+  .seal-logo {
+    position: absolute; inset: 4%;
+    background: url(logo-black.png) center / 100% no-repeat;
+    /* brush sweep: conic mask grows clockwise from 7 o'clock, like the stroke in the logo */
+    -webkit-mask: conic-gradient(from 200deg, #000 var(--sweep), transparent calc(var(--sweep) + 14deg));
+            mask: conic-gradient(from 200deg, #000 var(--sweep), transparent calc(var(--sweep) + 14deg));
+    animation: sweep 2.2s cubic-bezier(.65,0,.35,1) .7s forwards;
+    filter: contrast(1.05);
+  }
+  @keyframes sweep { to { --sweep: 380deg; } }
+  .kanji {
+    position: absolute; right: 0; top: 2%;
+    writing-mode: vertical-rl;
+    font: 700 clamp(28px, 4vw, 44px)/1 'Noto Serif JP', serif;
+    color: #e3867a;
+    clip-path: inset(0 0 100% 0);
+    animation: kanji 1s ease-out 2.6s forwards;
+  }
+  @keyframes kanji { to { clip-path: inset(0 0 0 0); } }
+
+  .eyebrow { color: var(--tatami); letter-spacing: .22em; text-transform: uppercase; font-size: 13px; font-weight: 600; }
+  .hero h1 { font-size: clamp(54px, 9vw, 132px); line-height: .95; margin: 18px 0 26px; }
+  .hero h1 .line { display: block; overflow: hidden; }
+  .hero h1 .line span { display: inline-block; transform: translateY(110%); }
+  .hero h1 em { font-style: italic; color: #e3867a; }
+  .hero p.lead { max-width: 30em; font-size: clamp(17px, 1.4vw, 20px); color: #d8cfbd; }
+  .brush-underline { display: block; width: min(360px, 70%); height: 22px; margin: -8px 0 22px; }
+  .brush-underline path { stroke-dasharray: 520; stroke-dashoffset: 520; }
+  .ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 30px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 28px; border-radius: 999px;
+    font: 600 15px Manrope, sans-serif; text-decoration: none; letter-spacing: .02em;
+    transition: transform .3s, background .3s;
+  }
+  .btn.primary { background: var(--oxblood); color: #fff; }
+  .btn.primary:hover { transform: translateY(-2px); background: #a4222d; }
+  .btn.ghost { border: 1px solid rgb(236 228 212 / .35); color: var(--paper); }
+  .scroll-hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: #a79e8a; }
+  .scroll-hint::after { content: ''; display: block; width: 1px; height: 40px; margin: 10px auto 0; background: linear-gradient(#a79e8a, transparent); animation: drip 2s infinite; transform-origin: top; }
+  @keyframes drip { 0% { transform: scaleY(0); } 60% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+
+  /* STORY: the Daruma wish, one eye now, one when it comes true */
+  section { position: relative; padding: clamp(80px, 12vw, 160px) clamp(16px, 6vw, 96px); }
+  .story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 6vw; align-items: center; }
+  @media (max-width: 860px) { .story { grid-template-columns: 1fr; } }
+  .story h2 { font-size: clamp(38px, 5.5vw, 76px); line-height: 1.02; }
+  .story h2 em { color: var(--oxblood); }
+  .story p { color: var(--muted); max-width: 32em; }
+  .eyes { display: flex; gap: clamp(18px, 4vw, 48px); justify-content: center; }
+  .eye {
+    width: clamp(110px, 16vw, 190px); aspect-ratio: 1; border-radius: 50%;
+    border: 3px solid var(--ink); position: relative; display: grid; place-items: center;
+    background: #f6f1e6;
+  }
+  .eye::after {
+    content: ''; width: 46%; aspect-ratio: 1; border-radius: 50%; background: var(--ink);
+    transform: scale(0); transition: transform .9s cubic-bezier(.3,1.6,.5,1);
+  }
+  .eye.painted::after { transform: scale(1); }
+  .eye-cap { text-align: center; margin-top: 14px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+  /* Ink-bleed reveal for headings and images */
+  .ink { clip-path: circle(0% at 20% 60%); transition: clip-path 1.4s cubic-bezier(.6,0,.2,1); }
+  .ink.in { clip-path: circle(150% at 20% 60%); }
+
+  .work { background: var(--paper-2); }
+  .work-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 48px; flex-wrap: wrap; }
+  .work-head h2 { font-size: clamp(38px, 5.5vw, 76px); }
+  .hanko { display: inline-grid; place-items: center; width: 54px; height: 54px; border: 2px solid var(--oxblood); color: var(--oxblood); border-radius: 6px; font: 700 20px 'Noto Serif JP', serif; transform: rotate(-6deg); }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+  .grid figure { margin: 0; position: relative; overflow: hidden; }
+  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.15); transition: transform 1.6s cubic-bezier(.2,.7,.2,1); filter: saturate(.85) contrast(1.05); }
+  .grid figure.in img { transform: scale(1); }
+  .grid figcaption { position: absolute; left: 14px; bottom: 12px; color: #fff; font-size: 13px; letter-spacing: .06em; text-shadow: 0 1px 8px rgb(0 0 0 / .6); }
+  .g1 { grid-column: 1 / span 5; aspect-ratio: 4 / 5; }
+  .g2 { grid-column: 7 / span 6; aspect-ratio: 16 / 11; margin-top: 90px !important; }
+  .g3 { grid-column: 2 / span 4; aspect-ratio: 1; }
+  .g4 { grid-column: 7 / span 4; aspect-ratio: 3 / 4; margin-top: -60px !important; }
+  @media (max-width: 760px) { .grid figure { grid-column: 1 / -1 !important; margin-top: 0 !important; aspect-ratio: 4 / 3 !important; } }
+
+  .cta-band { background: var(--moss); color: var(--paper); text-align: center; overflow: hidden; }
+  .cta-band h2 { font-size: clamp(40px, 7vw, 110px); line-height: 1; }
+  .cta-band p { color: #cfc6b3; }
+  .foot { padding: 30px clamp(16px, 6vw, 96px); display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); flex-wrap: wrap; gap: 10px; }
+</style>
+</head>
+<body>
+  <header class="nav">
+    <a href="#">Wise City</a>
+    <nav>
+      <a href="#work">Работы</a>
+      <a href="#story">Мастера</a>
+      <a href="#book" class="book">Записаться</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Тату и пирсинг · Минск</div>
+      <h1>
+        <span class="line"><span>Загадай.</span></span>
+        <span class="line"><span>Мы нарисуем</span></span>
+        <span class="line"><span><em>второй глаз.</em></span></span>
+      </h1>
+      <svg class="brush-underline" viewBox="0 0 360 22" aria-hidden="true">
+        <path d="M4 14 C 80 4, 180 20, 356 9" fill="none" stroke="#8e1b24" stroke-width="7" stroke-linecap="round" />
+      </svg>
+      <p class="lead">Три тату-мастера, два пирсера и одна комната, где важна каждая деталь. Приходите с идеей — уходите с работой, которую не стыдно носить всю жизнь.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#book">Записаться на консультацию</a>
+        <a class="btn ghost" href="#work">Смотреть работы</a>
+      </div>
+    </div>
+    <div class="seal-wrap">
+      <div class="seal-disc"></div>
+      <div class="seal-logo" role="img" aria-label="Wise City Daruma"></div>
+      <div class="kanji">達磨</div>
+    </div>
+    <div class="scroll-hint">листайте</div>
+  </section>
+
+  <section class="story" id="story">
+    <div>
+      <div class="eyebrow" style="color: var(--oxblood)">Традиция Дарумы</div>
+      <h2 class="ink">Один глаз — когда загадываешь. <em>Второй</em> — когда сбылось.</h2>
+      <p>Так в Японии обращаются с Дарумой: рисуют один зрачок, когда ставят цель, и второй, когда её достигли. С татуировкой так же: сначала идея и эскиз на консультации, потом — готовая работа.</p>
+    </div>
+    <div>
+      <div class="eyes">
+        <div><div class="eye painted" id="eye1"></div><div class="eye-cap">Идея</div></div>
+        <div><div class="eye" id="eye2"></div><div class="eye-cap">Готовая работа</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="work" id="work">
+    <div class="work-head">
+      <h2 class="ink">Работы мастеров</h2>
+      <span class="hanko">印</span>
+    </div>
+    <div class="grid">
+      <figure class="g1"><img src="https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=900&q=80&auto=format&fit=crop" alt="" /><figcaption>Mira · чёрно-серый рукав</figcaption></figure>
+      <figure class="g2"><img src="https://images.unsplash.com/photo-1601848714157-d845bb5c11ff?w=1200&q=80&auto=format&fit=crop" alt="" /><figcaption>Dan · олдскул</figcaption></figure>
+      <figure class="g3"><img src="https://images.unsplash.com/photo-1547754145-ef9ff306e3f3?w=900&q=80&auto=format&fit=crop" alt="" /><figcaption>Alex · fine-line</figcaption></figure>
+      <figure class="g4"><img src="https://images.unsplash.com/photo-1632568851266-b8e23c1738f5?w=900&q=80&auto=format&fit=crop" alt="" /><figcaption>Kate · композиция на ухе</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="cta-band" id="book">
+    <h2 class="ink">Начнём с эскиза</h2>
+    <p>Консультация бесплатная. Ответим в Telegram за пару минут.</p>
+    <div class="ctas" style="justify-content:center"><a class="btn primary" href="#">Записаться</a></div>
+  </section>
+  <div class="foot"><span>Wise City · ул. Примерная, 1, Минск</span><span>Концепт A · Ink &amp; Ensō</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Headline lines rise after the seal starts painting.
+  gsap.to('.hero h1 .line span', { y: 0, duration: reduce ? 0 : 1.1, ease: 'expo.out', stagger: .12, delay: .4 });
+  gsap.to('.brush-underline path', { strokeDashoffset: 0, duration: reduce ? 0 : 1.2, ease: 'power2.inOut', delay: 1.3 });
+  gsap.from(['.hero .lead', '.hero .ctas'], { opacity: 0, y: 20, duration: .9, stagger: .15, delay: 1.5 });
+
+  // Hero seal drifts and turns slightly on scroll.
+  gsap.to('.seal-wrap', { yPercent: 18, rotate: 8, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+
+  // Ink-bleed reveals.
+  document.querySelectorAll('.ink, .grid figure').forEach((el) =>
+    ScrollTrigger.create({ trigger: el, start: 'top 80%', once: true, onEnter: () => el.classList.add('in') }));
+
+  // The second eye gets painted when the story is in view: the wish comes true.
+  ScrollTrigger.create({ trigger: '.eyes', start: 'top 65%', onEnter: () => setTimeout(() => document.getElementById('eye2').classList.add('painted'), 700), onLeaveBack: () => document.getElementById('eye2').classList.remove('painted') });
+
+  // Gentle parallax on the portfolio.
+  gsap.utils.toArray('.grid figure').forEach((f, i) =>
+    gsap.to(f, { yPercent: i % 2 ? -8 : 6, ease: 'none', scrollTrigger: { trigger: f, scrub: true } }));
+</script>
+</body>
+</html>
