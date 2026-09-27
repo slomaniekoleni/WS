@@ -123,6 +123,11 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
 {
     StatusCodeSelector = ex => ex is BadHttpRequestException bad ? bad.StatusCode : StatusCodes.Status500InternalServerError,
 });
+// Built React site (web/dist -> wwwroot in the Docker image). Static files go before routing: once the SPA
+// fallback endpoint has matched, the static file middleware would skip the request and JS/CSS would get index.html.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -132,10 +137,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapGet("/health", () => Results.Ok("ok"));
 app.MapControllers();
 
-// Built React site (web/dist -> wwwroot in the Docker image). Client-side routes fall back to index.html,
-// but unknown /api/* paths stay 404s.
-app.UseDefaultFiles();
-app.UseStaticFiles();
+// Client-side routes fall back to index.html, but unknown /api/* paths stay 404s.
 app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
 
 app.Run();
