@@ -2,7 +2,8 @@
 #   Local site only:            docker compose up -d --build            -> http://localhost:8080
 #   Public demo (quick tunnel): docker compose --profile tunnel up -d --build
 #   Public demo (own domain):   docker compose --profile named-tunnel up -d --build   (needs TUNNEL_TOKEN in .env)
-# Or run scripts/demo.ps1: named tunnel if TUNNEL_TOKEN is set, otherwise a quick tunnel (prints the URL).
+#   Public demo (Tailscale):    docker compose --profile tailscale up -d --build      (needs TS_AUTHKEY in .env)
+# Or run scripts/demo.ps1: picks Tailscale / named tunnel / quick tunnel from what's in .env and prints the URL.
 services:
   api:
     build: .
@@ -48,5 +49,26 @@ services:
       api:
         condition: service_healthy
 
+  # Tailscale Funnel: free, stable https://<TS_HOSTNAME>.<tailnet>.ts.net, not routed through Cloudflare.
+  # Needs a Tailscale account with HTTPS certificates enabled and an auth key (TS_AUTHKEY in .env).
+  tailscale:
+    image: tailscale/tailscale:latest
+    profiles: [tailscale]
+    restart: unless-stopped
+    hostname: ${TS_HOSTNAME:-wisecity}
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_HOSTNAME: ${TS_HOSTNAME:-wisecity}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ts-state:/var/lib/tailscale
+      - ./deploy/tailscale-serve.json:/config/serve.json:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   ws-data:
+  ts-state:
