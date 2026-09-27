@@ -1,8 +1,7 @@
-import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
-import { ArtistCard, BrushStroke, OpeningHours, Seal } from '../components'
+import { OpeningHours } from '../components'
 import { useData } from '../data'
-import { Carousel } from '../gallery'
+import { ArtistList, HeroInk, StyleMarquee, WorksGallery } from '../homeMotion'
 import { useI18n } from '../i18n'
 
 export default function Home() {
@@ -10,38 +9,12 @@ export default function Home() {
   const data = useData()
   if (data.status !== 'ready') return null
   const { salon, artists } = data
-  // Interleave artists so the carousel doesn't show one artist's work in a row.
+  // Interleave artists so the gallery doesn't show one artist's work in a row.
   const works = interleave(artists.map((a) => a.portfolio.map((p) => ({ url: p.url, caption: p.caption, credit: a.name }))))
 
   return (
     <>
-      <section
-        className="hero"
-        style={salon.coverImageUrl ? { '--cover': `url("${salon.coverImageUrl}")` } as CSSProperties : undefined}
-      >
-        <div className="container hero-inner">
-          <div className="hero-text">
-            <p className="eyebrow">{t('home.tagline')}</p>
-            <h1>{salon.name}</h1>
-            <BrushStroke />
-            <p className="lead">{t('home.lead')}</p>
-            <div className="hero-actions">
-              <Link to="/book" className="btn">
-                {t('home.cta.book')}
-              </Link>
-              <Link to="/services" className="btn btn-ghost">
-                {t('home.cta.services')}
-              </Link>
-            </div>
-          </div>
-          <div className="hero-seal" aria-hidden>
-            <Seal size={320} />
-            <span className="kanji-vertical" lang="ja">
-              達磨
-            </span>
-          </div>
-        </div>
-      </section>
+      <HeroInk />
 
       <section className="container features">
         <Link to="/book?kind=tattoo" className="card feature">
@@ -58,19 +31,13 @@ export default function Home() {
         </Link>
       </section>
 
-      <section className="container section">
-        <h2>{t('home.works')}</h2>
-        <Carousel photos={works} />
-      </section>
+      <StyleMarquee artists={artists} />
+      <WorksGallery photos={works} />
 
       <section className="band band-walnut">
         <div className="container section">
           <h2>{t('home.artists')}</h2>
-          <div className="grid">
-            {artists.map((a) => (
-              <ArtistCard key={a.id} artist={a} />
-            ))}
-          </div>
+          <ArtistList artists={artists} />
         </div>
       </section>
 
