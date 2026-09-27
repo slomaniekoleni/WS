@@ -6,7 +6,7 @@ using Serilog.Formatting.Compact;
 using Microsoft.Extensions.Options;
 using Ws.Api;
 using Ws.Api.Admin;
-using Ws.Api.Endpoints;
+using Ws.Api.Controllers;
 using Ws.Api.Telegram;
 using Ws.Core.Data;
 using Ws.Core.Notifications;
@@ -72,10 +72,10 @@ builder.Services.AddStaffAuth();
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    o.AddPolicy(ChatEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+    o.AddPolicy(RateLimits.Chat, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 12, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-    o.AddPolicy(StaffAuth.LoginRateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+    o.AddPolicy(RateLimits.Login, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5), QueueLimit = 0 }));
 });
@@ -83,8 +83,8 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(ws.CorsOrigins).AllowAnyHeader().AllowAnyMethod()));
-builder.Services.ConfigureHttpJsonOptions(o =>
-    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
 
@@ -113,10 +113,7 @@ app.UseRateLimiter();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/health", () => Results.Ok("ok"));
-app.MapPublicApi();
-app.MapChatApi();
-app.MapStaffAuth();
-app.MapAdminApi();
+app.MapControllers();
 
 // Built React site (web/dist -> wwwroot in the Docker image). Client-side routes fall back to index.html,
 // but unknown /api/* paths stay 404s.

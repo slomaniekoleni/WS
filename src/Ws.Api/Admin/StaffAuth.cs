@@ -23,7 +23,6 @@ public sealed class AdminBootstrapOptions
 
 public static class StaffAuth
 {
-    public const string LoginRateLimitPolicy = "login";
     public const string SalonIdClaim = "salon_id";
     private static readonly PasswordHasher<StaffUser> Hasher = new();
 
@@ -78,47 +77,5 @@ public static class StaffAuth
         db.StaffUsers.Add(user);
         await db.SaveChangesAsync();
         log.LogInformation("Owner account {Login} created", user.Login);
-    }
-
-    public sealed record LoginRequest(string Login, string Password);
-    public sealed record MeDto(int Id, string Login, string DisplayName, StaffRole Role);
-
-    public static void MapStaffAuth(this IEndpointRouteBuilder app)
-    {
-        var auth = app.MapGroup("/api/admin/auth");
-
-        auth.MapPost("/login", async (LoginRequest req, WsDbContext db, HttpContext http, TimeProvider clock, CancellationToken ct) =>
-        {
-            var login = (req.Login ?? "").Trim().ToLowerInvariant();
-            var user = await db.StaffUsers.FirstOrDefaultAsync(u => u.Login == login && u.IsActive, ct);
-            // Same answer for unknown login and wrong password.
-            if (user == null || !Verify(user, req.Password ?? "")) return Results.Problem(statusCode: 401, title: "Wrong login or password", type: "BadCredentials");
-
-            user.LastLoginAtUtc = clock.GetUtcNow().UtcDateTime;
-            await db.SaveChangesAsync(ct);
-
-            var identity = new ClaimsIdentity(
-            [
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.DisplayName),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim(SalonIdClaim, user.SalonId.ToString()),
-            ], CookieAuthenticationDefaults.AuthenticationScheme);
-            await http.SignInAsync(new ClaimsPrincipal(identity), new AuthenticationProperties { IsPersistent = true });
-            return Results.Ok(new MeDto(user.Id, user.Login, user.DisplayName, user.Role));
-        }).RequireRateLimiting(LoginRateLimitPolicy);
-
-        auth.MapPost("/logout", async (HttpContext http) =>
-        {
-            await http.SignOutAsync();
-            return Results.NoContent();
-        });
-
-        auth.MapGet("/me", async (ClaimsPrincipal principal, WsDbContext db, CancellationToken ct) =>
-        {
-            if (!int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var id)) return Results.Unauthorized();
-            var user = await db.StaffUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id && u.IsActive, ct);
-            return user == null ? Results.Unauthorized() : Results.Ok(new MeDto(user.Id, user.Login, user.DisplayName, user.Role));
-        }).RequireAuthorization();
     }
 }
