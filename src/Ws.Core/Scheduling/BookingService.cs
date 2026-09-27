@@ -178,6 +178,14 @@ public sealed class BookingService(WsDbContext db, TimeProvider clock, IStaffNot
     public Task<BookingResult> CancelAsync(int bookingId, string? reason, CancellationToken ct = default) =>
         DecideAsync(bookingId, Booking.ActiveStatuses, BookingStatus.Cancelled, reason, ct);
 
+    /// <summary>After the appointment: the client came.</summary>
+    public Task<BookingResult> CompleteAsync(int bookingId, CancellationToken ct = default) =>
+        DecideAsync(bookingId, [BookingStatus.Confirmed], BookingStatus.Completed, null, ct);
+
+    /// <summary>After the appointment: the client didn't come.</summary>
+    public Task<BookingResult> MarkNoShowAsync(int bookingId, CancellationToken ct = default) =>
+        DecideAsync(bookingId, [BookingStatus.Confirmed], BookingStatus.NoShow, null, ct);
+
     private async Task<BookingResult> DecideAsync(
         int bookingId, BookingStatus[] allowedFrom, BookingStatus to, string? reason, CancellationToken ct)
     {

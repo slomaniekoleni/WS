@@ -3,7 +3,9 @@ using Anthropic;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
+using Microsoft.Extensions.Options;
 using Ws.Api;
+using Ws.Api.Admin;
 using Ws.Api.Endpoints;
 using Ws.Api.Telegram;
 using Ws.Core.Data;
@@ -60,13 +62,22 @@ else
     builder.Services.AddSingleton<IStaffNotifier>(NullStaffNotifier.Instance);
 }
 
-// Each chat message costs a Claude call: cap it per client IP.
+builder.Services.AddScoped<ClientNotifier>();
+
+// Staff admin panel: cookie login; first owner from Admin:Login / Admin:Password.
+builder.Services.Configure<AdminBootstrapOptions>(builder.Configuration.GetSection(AdminBootstrapOptions.Section));
+builder.Services.AddStaffAuth();
+
+// Each chat message costs a Claude call: cap it per client IP. Logins are capped against password guessing.
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     o.AddPolicy(ChatEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 12, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    o.AddPolicy(StaffAuth.LoginRateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5), QueueLimit = 0 }));
 });
 
 builder.Services.AddOpenApi();
@@ -82,6 +93,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<WsDbContext>();
     await db.Database.MigrateAsync();
     await SeedData.EnsureSeededAsync(db);
+    await StaffAuth.EnsureOwnerAsync(db, scope.ServiceProvider.GetRequiredService<IOptions<AdminBootstrapOptions>>().Value,
+        ws.SalonId, TimeProvider.System, app.Logger);
     app.Logger.LogInformation("Database ready at {Path}", dbPath);
     if (string.IsNullOrWhiteSpace(claudeKey)) app.Logger.LogWarning("Claude:ApiKey not set: AI chat is disabled");
     if (string.IsNullOrWhiteSpace(telegramToken)) app.Logger.LogWarning("Telegram:BotToken not set: Telegram bot, staff notifications and reminders are off");
@@ -94,12 +107,16 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
     StatusCodeSelector = ex => ex is BadHttpRequestException bad ? bad.StatusCode : StatusCodes.Status500InternalServerError,
 });
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.MapGet("/health", () => Results.Ok("ok"));
 app.MapPublicApi();
 app.MapChatApi();
+app.MapStaffAuth();
+app.MapAdminApi();
 
 // Built React site (web/dist -> wwwroot in the Docker image). Client-side routes fall back to index.html,
 // but unknown /api/* paths stay 404s.
@@ -108,3 +125,6 @@ app.UseStaticFiles();
 app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
 
 app.Run();
+
+// Lets integration tests (WebApplicationFactory<Program>) reach the app.
+public partial class Program;

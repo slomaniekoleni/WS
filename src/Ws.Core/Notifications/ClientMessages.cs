@@ -14,6 +14,10 @@ public static class ClientMessages
         ? $"К сожалению, мастер не сможет принять вас в это время:\n{Summary(b, salon)}\nНапишите, и я подберу другое время."
         : $"Unfortunately the artist can't take you at this time:\n{Summary(b, salon)}\nWrite to me and I'll find another time.";
 
+    public static string Cancelled(Booking b, Salon salon) => Ru(b)
+        ? $"Ваша запись отменена:\n{Summary(b, salon)}\nЕсли это неожиданно или хотите другое время, напишите сюда."
+        : $"Your booking was cancelled:\n{Summary(b, salon)}\nIf that's unexpected or you'd like another time, write here.";
+
     public static string Reminder(Booking b, Salon salon, ReminderKind kind) => (Ru(b), kind) switch
     {
         (true, ReminderKind.DayBefore) =>

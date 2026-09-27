@@ -185,11 +185,7 @@ public sealed class TelegramBot(
             StaffMessages.BookingRequest(BookingNotice.From(booking, zone)) + "\n\n" + statusLine, html: true, ct: ct);
         await api.AnswerCallbackQueryAsync(cb.Id, result.Ok ? (approve ? "Подтверждено" : "Отклонено") : "Заявка уже обработана", ct);
 
-        if (result.Ok && clientTelegram != null)
-        {
-            var text = approve ? ClientMessages.Confirmed(booking, salon) : ClientMessages.Declined(booking, salon);
-            await api.SendMessageAsync(clientTelegram.Value, text, ct: ct);
-        }
+        if (result.Ok) await scope.ServiceProvider.GetRequiredService<ClientNotifier>().BookingDecidedAsync(booking, ct);
         log.LogInformation("Booking {BookingId} {Decision} by {Who} (ok={Ok})", bookingId, approve ? "approved" : "declined", who, result.Ok);
     }
 

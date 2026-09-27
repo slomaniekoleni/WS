@@ -20,6 +20,7 @@ public sealed class WsDbContext(DbContextOptions<WsDbContext> options) : DbConte
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();
+    public DbSet<StaffUser> StaffUsers => Set<StaffUser>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -90,6 +91,15 @@ public sealed class WsDbContext(DbContextOptions<WsDbContext> options) : DbConte
             e.HasOne(x => x.Service).WithMany().HasForeignKey(x => x.ServiceId);
             e.HasOne(x => x.Client).WithMany().HasForeignKey(x => x.ClientId);
             e.OwnsOne(x => x.Tattoo, t => t.ToJson());
+        });
+
+        b.Entity<StaffUser>(e =>
+        {
+            e.HasIndex(x => x.Login).IsUnique();
+            e.Property(x => x.Login).HasMaxLength(64);
+            e.Property(x => x.DisplayName).HasMaxLength(100);
+            e.HasOne<Salon>().WithMany().HasForeignKey(x => x.SalonId);
+            e.HasOne<Artist>().WithMany().HasForeignKey(x => x.ArtistId);
         });
 
         b.Entity<Conversation>(e =>
