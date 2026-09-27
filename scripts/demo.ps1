@@ -1,5 +1,7 @@
-# Public demo from this PC: builds and starts the app in Docker behind a Cloudflare quick tunnel
-# and prints the public https URL. Stop with: docker compose --profile tunnel down
+# Public demo from this PC: builds and starts the app in Docker behind a Cloudflare tunnel.
+#   TUNNEL_TOKEN in .env -> named tunnel on your own domain (stable URL, set up in the Cloudflare dashboard)
+#   no token             -> quick tunnel, prints a random https://*.trycloudflare.com URL (changes on restart)
+# Stop with: docker compose --profile tunnel --profile named-tunnel down
 # Note: stop any `dotnet run` of the API first, only one process may poll the Telegram bot.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -9,6 +11,19 @@ try {
         Write-Host "No .env yet: run .\scripts\env-from-user-secrets.ps1 first (or copy .env.example)." -ForegroundColor Yellow
         exit 1
     }
+    $named = (Get-Content '.env') -match "^TUNNEL_TOKEN=\s*'?[^'\s]+"
+
+    if ($named) {
+        # Don't leave the old quick tunnel running next to the named one.
+        docker compose --profile tunnel stop tunnel 2>$null | Out-Null
+        docker compose --profile named-tunnel up -d --build
+        if ($LASTEXITCODE -ne 0) { throw "docker compose failed" }
+        Write-Host ""
+        Write-Host "Named tunnel started: the site is on the hostname configured in the Cloudflare dashboard." -ForegroundColor Green
+        Write-Host "Check the connection: docker compose --profile named-tunnel logs named-tunnel"
+        exit 0
+    }
+
     docker compose --profile tunnel up -d --build
     if ($LASTEXITCODE -ne 0) { throw "docker compose failed" }
 

@@ -2,7 +2,7 @@
 #   Local site only:            docker compose up -d --build            -> http://localhost:8080
 #   Public demo (quick tunnel): docker compose --profile tunnel up -d --build
 #   Public demo (own domain):   docker compose --profile named-tunnel up -d --build   (needs TUNNEL_TOKEN in .env)
-# Or run scripts/demo.ps1, which does the tunnel variant and prints the public URL.
+# Or run scripts/demo.ps1: named tunnel if TUNNEL_TOKEN is set, otherwise a quick tunnel (prints the URL).
 services:
   api:
     build: .
