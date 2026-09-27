@@ -18,6 +18,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8099", "--directory", "design/playground"],
       "port": 8099
+    },
+    {
+      "name": "motion",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8098", "--directory", "design/motion"],
+      "port": 8098
     }
   ]
 }
