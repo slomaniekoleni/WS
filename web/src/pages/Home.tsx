@@ -63,12 +63,14 @@ export default function Home() {
         <Carousel photos={works} />
       </section>
 
-      <section className="container section">
-        <h2>{t('home.artists')}</h2>
-        <div className="grid">
-          {artists.map((a) => (
-            <ArtistCard key={a.id} artist={a} />
-          ))}
+      <section className="band band-walnut">
+        <div className="container section">
+          <h2>{t('home.artists')}</h2>
+          <div className="grid">
+            {artists.map((a) => (
+              <ArtistCard key={a.id} artist={a} />
+            ))}
+          </div>
         </div>
       </section>
 

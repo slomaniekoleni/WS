@@ -116,26 +116,73 @@
 }
 
 /* "Moss forest": deep moss green base, oxblood red for actions, tatami and fog-paper tones for text. */
+/*
+ * Layout "moss, paper, cedar" (owner's pick for now): moss green only for header, hero and footer,
+ * cream paper for the page body, a walnut band for the artists on the home page.
+ * The body tokens are the paper ones; .moss-zone / .band-walnut re-scope the same tokens locally.
+ */
 :root[data-theme='moss'] {
+  --bg: #ece4d4;
+  --bg-deep: #2f3a2c;
+  --bg-raised: #fbf7ef;
+  --bg-hover: #e3d8c3;
+  --border: #d8ccb4;
+  --text: #211a17;
+  --muted: #5e5046;
+  --accent: #8e1b24;
+  --accent-fill: #8e1b24;
+  --accent-fill-hover: #a3232c;
+  --accent-ink: #f3ede3;
+  --tatami: #716729;
+  --stamp: #8e1b24;
+  --paper: #ece4d4;
+  --ink: #211a17;
+  --danger: #a3232c;
+  --radius: 14px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  color-scheme: light;
+}
+
+[data-theme='moss'] .header,
+[data-theme='moss'] .hero,
+[data-theme='moss'] .footer {
   --bg: #2f3a2c;
-  --bg-deep: #252e23;
   --bg-raised: #36432f;
   --bg-hover: #3f4d38;
   --border: #4d5a45;
   --text: #ece4d4;
   --muted: #bdb39d;
   --accent: #e3867a;
-  --accent-fill: #8e1b24;
-  --accent-fill-hover: #a3232c;
-  --accent-ink: #f3ede3;
   --tatami: #c9b98f;
-  --stamp: #8e1b24;
-  --paper: #ece4d4;
-  --ink: #211a17;
-  --danger: #f09a8c;
-  --radius: 14px;
-  --font-display: 'Playfair Display', Georgia, serif;
-  color-scheme: dark;
+  background: var(--bg);
+  color: var(--text);
+}
+
+[data-theme='moss'] .header {
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+}
+
+/* Full-width colour bands inside the page (home artists). */
+.band {
+  padding: 48px 0 56px;
+  margin-top: 56px;
+}
+
+.band > .section {
+  margin-top: 0;
+}
+
+[data-theme='moss'] .band-walnut {
+  --bg: #4a3326;
+  --bg-raised: rgb(255 255 255 / 0.07);
+  --bg-hover: rgb(255 255 255 / 0.1);
+  --border: #5f4536;
+  --text: #ece4d4;
+  --muted: #cdbfae;
+  --accent: #e3a48f;
+  --tatami: #c9b98f;
+  background: var(--bg);
+  color: var(--text);
 }
 
 * {
