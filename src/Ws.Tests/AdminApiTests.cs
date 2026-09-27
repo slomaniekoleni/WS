@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ws.Tests;
 
@@ -109,6 +109,42 @@ public sealed class AdminApiTests : IClassFixture<AdminApiTests.App>
         Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsync($"/api/admin/bookings/{id}/approve", null)).StatusCode);
         var done = await client.PostAsync($"/api/admin/bookings/{id}/complete", null);
         Assert.Equal("Completed", (await done.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Handed_off_chats_are_listed_first_and_can_be_resolved()
+    {
+        using (var scope = _app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<Ws.Core.Data.WsDbContext>();
+            var now = DateTime.UtcNow;
+            db.Conversations.Add(new Ws.Core.Domain.Conversation
+            {
+                SalonId = 1, Channel = Ws.Core.Domain.Channel.Telegram, ExternalId = "777", Language = "ru",
+                NeedsHuman = true, HandoffReason = "complaint", CreatedAtUtc = now, LastMessageAtUtc = now,
+                Messages =
+                [
+                    new() { Role = Ws.Core.Domain.MessageRole.User, Text = "Мне нужен человек", CreatedAtUtc = now },
+                    new() { Role = Ws.Core.Domain.MessageRole.ToolResult, Text = "", ContentJson = "[]", CreatedAtUtc = now },
+                    new() { Role = Ws.Core.Domain.MessageRole.Assistant, Text = "Передаю администратору", CreatedAtUtc = now },
+                ],
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = await LoggedIn();
+        var list = await client.GetFromJsonAsync<JsonElement>("/api/admin/conversations?needsHuman=true", Json);
+        var conv = list.EnumerateArray().First(c => c.GetProperty("handoffReason").GetString() == "complaint");
+        Assert.Equal("Мне нужен человек", conv.GetProperty("lastMessage").GetString());
+        Assert.Equal(2, conv.GetProperty("messageCount").GetInt32()); // tool results are not part of the transcript
+
+        var id = conv.GetProperty("id").GetInt32();
+        var transcript = await client.GetFromJsonAsync<JsonElement>($"/api/admin/conversations/{id}", Json);
+        Assert.Equal(2, transcript.GetProperty("messages").GetArrayLength());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync($"/api/admin/conversations/{id}/resolve", null)).StatusCode);
+        var after = await client.GetFromJsonAsync<JsonElement>("/api/admin/conversations?needsHuman=true", Json);
+        Assert.DoesNotContain(after.EnumerateArray(), c => c.GetProperty("id").GetInt32() == id);
     }
 
     [Fact]

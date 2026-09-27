@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
 import ChatWidget from './ChatWidget'
 import { Seal } from './components'
@@ -10,6 +10,9 @@ import Home from './pages/Home'
 import Info from './pages/Info'
 import Services from './pages/Services'
 
+// Staff panel: its own chunk, so website visitors never download it.
+const AdminApp = lazy(() => import('./admin/AdminApp'))
+
 export default function App() {
   const { t } = useI18n()
   const data = useData()
@@ -18,6 +21,16 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
+
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    return (
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="admin/*" element={<AdminApp />} />
+        </Routes>
+      </Suspense>
+    )
+  }
 
   return (
     <>
