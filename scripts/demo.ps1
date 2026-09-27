@@ -4,7 +4,8 @@
 #   neither      -> Cloudflare quick tunnel, random https://*.trycloudflare.com (changes on restart)
 # Stop with: docker compose --profile tailscale --profile named-tunnel --profile tunnel down
 # Note: stop any `dotnet run` of the API first, only one process may poll the Telegram bot.
-$ErrorActionPreference = 'Stop'
+# Not 'Stop': Windows PowerShell 5.1 turns docker's progress output (stderr) into errors. Exit codes are checked instead.
+$ErrorActionPreference = 'Continue'
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 try {
@@ -19,7 +20,7 @@ try {
 
     # Only one tunnel at a time.
     foreach ($other in @('tailscale', 'named-tunnel', 'tunnel') | Where-Object { $_ -ne $mode }) {
-        docker compose --profile $other stop $other 2>$null | Out-Null
+        docker compose --profile $other stop $other *> $null
     }
     docker compose --profile $mode up -d --build
     if ($LASTEXITCODE -ne 0) { throw "docker compose failed" }

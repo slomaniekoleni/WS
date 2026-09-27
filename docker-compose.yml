@@ -15,8 +15,9 @@ services:
       - path: .env
         required: false
     environment:
-      # Real visitor IP from Cloudflare (rate limits, logs). Safe because the port above isn't exposed to the network.
-      Ws__ForwardedIpHeader: CF-Connecting-IP
+      # Real visitor IP (rate limits, logs): Cloudflare and Tailscale both append it as the last X-Forwarded-For entry.
+      # Safe because the port above isn't exposed to the network.
+      Ws__ForwardedIpHeader: X-Forwarded-For
     volumes:
       - ws-data:/data
     healthcheck:
