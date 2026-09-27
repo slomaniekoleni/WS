@@ -34,6 +34,9 @@ public sealed class TelegramApi(IHttpClientFactory httpFactory, IOptions<Telegra
         return response.Result ?? [];
     }
 
+    public async Task<User?> GetMeAsync(CancellationToken ct) =>
+        (await CallAsync<User>("getMe", new { }, ct)).Result;
+
     public async Task<TelegramResult> SendMessageAsync(long chatId, string text, bool html = false, object? replyMarkup = null, CancellationToken ct = default)
     {
         var response = await CallAsync<Message>("sendMessage", new

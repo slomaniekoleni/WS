@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, ApiError, type ChatMessage } from './api'
+import { useData } from './data'
 import { useI18n } from './i18n'
 
 const SESSION_KEY = 'chatSession'
@@ -17,7 +18,14 @@ function sessionId(): string {
   }
 }
 
+/** Hidden while the AI is off (no Claude key on the server), so visitors never hit a dead chat. */
 export default function ChatWidget() {
+  const data = useData()
+  if (data.status !== 'ready' || !data.salon.chatEnabled) return null
+  return <Chat telegramBot={data.salon.telegramBot} />
+}
+
+function Chat({ telegramBot }: { telegramBot: string | null }) {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
   const [session] = useState(sessionId)
@@ -73,7 +81,17 @@ export default function ChatWidget() {
           <header className="chat-head">
             <div>
               <strong>{t('chat.title')}</strong>
-              <span className="muted small">{t('chat.subtitle')}</span>
+              <span className="muted small">
+                {t('chat.subtitle')}
+                {telegramBot && (
+                  <>
+                    {' · '}
+                    <a href={`https://t.me/${telegramBot}`} target="_blank" rel="noreferrer">
+                      Telegram
+                    </a>
+                  </>
+                )}
+              </span>
             </div>
             <button className="chat-close" onClick={() => setOpen(false)} aria-label={t('chat.close')}>
               ×

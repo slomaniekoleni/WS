@@ -3,7 +3,7 @@ import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
 import ChatWidget from './ChatWidget'
 import { Seal } from './components'
 import { useData } from './data'
-import { useI18n } from './i18n'
+import { useI18n, type Key } from './i18n'
 import Artists from './pages/Artists'
 import Book from './pages/Book'
 import Home from './pages/Home'
@@ -21,6 +21,14 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
+
+  // Tab title per page, e.g. "Artists · Wise City".
+  const page = PAGE_TITLES[pathname.replace(/\/$/, '')]
+  const salonName = data.status === 'ready' ? data.salon.name : 'Wise City'
+  useEffect(() => {
+    if (pathname.startsWith('/admin')) return
+    document.title = page ? `${t(page)} · ${salonName}` : `${salonName}: ${t('footer.rights')}`
+  }, [pathname, page, salonName, t])
 
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     return (
@@ -44,13 +52,38 @@ export default function App() {
             <Route path="artists" element={<Artists />} />
             <Route path="info" element={<Info />} />
             <Route path="book" element={<Book />} />
-            <Route path="*" element={<Home />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         )}
       </main>
       <Footer />
       <ChatWidget />
     </>
+  )
+}
+
+const PAGE_TITLES: Record<string, Key> = {
+  '/services': 'nav.services',
+  '/artists': 'nav.artists',
+  '/info': 'nav.info',
+  '/book': 'nav.book',
+}
+
+function NotFound() {
+  const { t } = useI18n()
+  return (
+    <section className="container section not-found">
+      <h1>{t('notFound.title')}</h1>
+      <p className="muted">{t('notFound.text')}</p>
+      <div className="not-found-actions">
+        <Link to="/" className="btn">
+          {t('notFound.home')}
+        </Link>
+        <Link to="/book" className="btn btn-ghost">
+          {t('nav.book')}
+        </Link>
+      </div>
+    </section>
   )
 }
 
@@ -99,6 +132,11 @@ function Footer() {
           {salon.instagram && (
             <a href={`https://instagram.com/${salon.instagram}`} target="_blank" rel="noreferrer">
               @{salon.instagram}
+            </a>
+          )}
+          {salon.chatEnabled && salon.telegramBot && (
+            <a href={`https://t.me/${salon.telegramBot}`} target="_blank" rel="noreferrer">
+              Telegram: @{salon.telegramBot}
             </a>
           )}
         </div>

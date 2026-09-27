@@ -363,6 +363,7 @@ textarea {
 
 .header-actions {
   display: flex;
+  flex: none;
   gap: 10px;
   align-items: center;
 }
@@ -410,9 +411,11 @@ textarea {
   .header-inner {
     gap: 12px;
   }
+  /* Phones: logo left, language/book right, links centred between them. */
   .nav {
     gap: 12px;
     font-size: 0.9rem;
+    margin: 0 auto;
   }
   .header .logo > span:not(.seal) {
     display: none;
@@ -1405,4 +1408,17 @@ textarea {
 .chat-input textarea:focus {
   outline: none;
   border-color: var(--accent);
+}
+/* 404 */
+.not-found {
+  text-align: center;
+  padding-block: 80px;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 24px;
 }

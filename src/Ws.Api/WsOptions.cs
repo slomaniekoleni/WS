@@ -12,4 +12,10 @@ public sealed class WsOptions
     public bool LogJson { get; set; }
     /// <summary>Origins allowed to call the API from a browser (the Vite dev server locally).</summary>
     public string[] CorsOrigins { get; set; } = [];
+    /// <summary>
+    /// Behind a proxy/tunnel: the header carrying the real client IP (e.g. "CF-Connecting-IP" for Cloudflare),
+    /// used for rate limits and logs. Only set it when the app is reachable solely through that proxy,
+    /// otherwise clients could fake their IP.
+    /// </summary>
+    public string? ForwardedIpHeader { get; set; }
 }

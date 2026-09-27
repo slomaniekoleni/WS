@@ -16,6 +16,10 @@ export interface Salon {
   minAgeWithGuardian: number
   minAgeSolo: number
   openingHours: { day: DayOfWeek; open: string; close: string }[]
+  /** AI chat is on (the server has a Claude key). */
+  chatEnabled: boolean
+  /** The salon bot's @username (without @) when Telegram is on. */
+  telegramBot: string | null
 }
 
 export type ServiceKind = 'TattooConsultation' | 'TattooSession' | 'TattooTouchUp' | 'Piercing' | 'JewelryChange'

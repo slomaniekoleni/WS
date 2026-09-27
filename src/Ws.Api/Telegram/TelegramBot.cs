@@ -20,6 +20,7 @@ public sealed class TelegramBot(
     IServiceScopeFactory scopes,
     IOptions<TelegramOptions> telegramOptions,
     IOptions<WsOptions> wsOptions,
+    ChannelInfo channels,
     ILogger<TelegramBot> log) : BackgroundService
 {
     private readonly TelegramOptions _opt = telegramOptions.Value;
@@ -33,6 +34,8 @@ public sealed class TelegramBot(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         log.LogInformation("Telegram bot started (staff chat {StaffChat})", _opt.StaffChatId?.ToString() ?? "not set");
+        // For the website's "write us in Telegram" link.
+        channels.TelegramBot = (await api.GetMeAsync(stoppingToken))?.Username;
         long offset = 0;
         while (!stoppingToken.IsCancellationRequested)
         {

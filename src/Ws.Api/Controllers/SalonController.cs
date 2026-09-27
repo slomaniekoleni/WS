@@ -7,7 +7,7 @@ namespace Ws.Api.Controllers;
 
 /// <summary>Public salon info for the website. Text in ?lang=en|ru.</summary>
 [Route("api/salon")]
-public sealed class SalonController(WsDbContext db, IOptions<WsOptions> options) : ApiControllerBase
+public sealed class SalonController(WsDbContext db, IOptions<WsOptions> options, ChannelInfo channels) : ApiControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<SalonDto>> Get(string? lang, CancellationToken ct)
@@ -19,13 +19,14 @@ public sealed class SalonController(WsDbContext db, IOptions<WsOptions> options)
         return new SalonDto(
             s.Name, s.Address.Get(lang), s.Phone, s.Instagram, s.About.Get(lang), s.Policies.Get(lang), s.Currency,
             s.TimeZoneId, s.Country, s.CoverImageUrl, s.MinAgeWithGuardian, s.MinAgeSolo,
-            s.OpeningHours.OrderBy(h => ((int)h.Day + 6) % 7).Select(h => new OpeningHoursDto(h.Day, h.Open, h.Close)).ToList());
+            s.OpeningHours.OrderBy(h => ((int)h.Day + 6) % 7).Select(h => new OpeningHoursDto(h.Day, h.Open, h.Close)).ToList(),
+            channels.ChatEnabled, channels.TelegramBot);
     }
 }
 
 public sealed record SalonDto(
     string Name, string Address, string Phone, string? Instagram, string About, string Policies, string Currency,
     string TimeZone, string Country, string? CoverImageUrl, int MinAgeWithGuardian, int MinAgeSolo,
-    IReadOnlyList<OpeningHoursDto> OpeningHours);
+    IReadOnlyList<OpeningHoursDto> OpeningHours, bool ChatEnabled, string? TelegramBot);
 
 public sealed record OpeningHoursDto(DayOfWeek Day, TimeOnly Open, TimeOnly Close);

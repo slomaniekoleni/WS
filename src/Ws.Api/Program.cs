@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Anthropic;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -31,6 +32,20 @@ builder.Services.AddDbContext<WsDbContext>(o => o.UseSqlite($"Data Source={dbPat
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<BookingService>();
 
+// Behind Cloudflare Tunnel (or another proxy) the connection comes from the proxy: take the client IP and
+// https scheme from its headers, so rate limits are per visitor and the staff cookie is marked Secure.
+if (!string.IsNullOrWhiteSpace(ws.ForwardedIpHeader))
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    {
+        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        o.ForwardedForHeaderName = ws.ForwardedIpHeader;
+        // The proxy runs in another container (unknown IP); ForwardedIpHeader is only set when it's the sole way in.
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    });
+}
+
 // AI receptionist. Without Claude:ApiKey (user-secrets locally, Claude__ApiKey env on servers) the site works
 // and the chat endpoint answers 503.
 builder.Services.Configure<ReceptionistOptions>(builder.Configuration.GetSection(ReceptionistOptions.Section));
@@ -41,6 +56,7 @@ if (!string.IsNullOrWhiteSpace(claudeKey))
     builder.Services.AddScoped<ReceptionistTools>();
     builder.Services.AddScoped<Receptionist>();
 }
+builder.Services.AddSingleton(new ChannelInfo { ChatEnabled = !string.IsNullOrWhiteSpace(claudeKey) });
 
 // Telegram: client bot, staff group (booking approvals, AI handoffs), reminders. Off without Telegram:BotToken.
 builder.Services.Configure<TelegramOptions>(builder.Configuration.GetSection(TelegramOptions.Section));
@@ -100,6 +116,7 @@ using (var scope = app.Services.CreateScope())
     if (string.IsNullOrWhiteSpace(telegramToken)) app.Logger.LogWarning("Telegram:BotToken not set: Telegram bot, staff notifications and reminders are off");
 }
 
+if (!string.IsNullOrWhiteSpace(ws.ForwardedIpHeader)) app.UseForwardedHeaders();
 app.UseSerilogRequestLogging();
 // Malformed requests are the client's fault: 400, not 500.
 app.UseExceptionHandler(new ExceptionHandlerOptions

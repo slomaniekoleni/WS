@@ -92,9 +92,12 @@ const en = {
 
   'footer.rights': 'Tattoo & piercing, Minsk',
   'common.error': 'Could not load data. Please refresh the page.',
+  'notFound.title': 'Page not found',
+  'notFound.text': 'This page does not exist or has moved.',
+  'notFound.home': 'To the home page',
 }
 
-type Key = keyof typeof en
+export type Key = keyof typeof en
 
 const ru: Record<Key, string> = {
   'nav.services': 'Услуги',
@@ -186,6 +189,9 @@ const ru: Record<Key, string> = {
 
   'footer.rights': 'Тату и пирсинг, Минск',
   'common.error': 'Не удалось загрузить данные. Обновите страницу.',
+  'notFound.title': 'Страница не найдена',
+  'notFound.text': 'Такой страницы нет или она переехала.',
+  'notFound.home': 'На главную',
 }
 
 const dictionaries: Record<Lang, Record<Key, string>> = { en, ru }
